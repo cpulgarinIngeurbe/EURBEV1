@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function firmado()   { return request.auth != null && request.auth.token.email_verified == true; }
+    function correo()    { return request.auth.token.email.lower(); }
+    function rutaAcc()   { return /databases/$(db)/documents/accesos/$(correo()); }
+    function acceso()    { return get(rutaAcc()).data; }
+    function habilitado(){ return firmado() && exists(rutaAcc()) && acceso().activo == true; }
+    function esAdmin()   { return habilitado() && acceso().rol == 'admin'; }
+    function registra()  { return habilitado() && acceso().rol in ['admin', 'registrador']; }
+
+    match /accesos/{c} {
+      allow read: if firmado() && (c == correo() || esAdmin());
+      allow create, update: if esAdmin()
+        && c == c.lower()
+        && request.resource.data.rol in ['admin', 'registrador', 'consulta']
+        && request.resource.data.activo is bool;
+      allow delete: if false;
+    }
+
+    match /obras/{obraId} {
+      allow read: if habilitado();
+      allow create: if esAdmin() && request.resource.data.contadorCortes == 0;
+      // El registrador solo puede mover el contador de uno en uno (numeración)
+      allow update: if esAdmin()
+        || (registra()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['contadorCortes'])
+            && request.resource.data.contadorCortes == resource.data.contadorCortes + 1);
+      allow delete: if false;
+
+      match /modelos/{versionId} {
+        allow read: if habilitado();
+        allow create: if esAdmin();
+        allow update, delete: if false;
+        match /trozos/{n} {
+          allow read: if habilitado();
+          allow create: if esAdmin();
+          allow update, delete: if false;
+        }
+      }
+
+      match /cortes/{corteId} {
+        function rutaObra() { return /databases/$(db)/documents/obras/$(obraId); }
+        function nuevo()    { return request.resource.data; }
+        function campos() {
+          return ['numeroSec','number','date','notes','elementIds','totalElements','qtyByUnit',
+                  'actividad','nivel','edificacion','descGrupo','registeredAt','estado','creadoPor',
+                  'modeloVersion','historial','ultimoCambio','importado','anuladoPor','motivoAnulacion'];
+        }
+
+        function registroNormal() {
+          return registra()
+            && nuevo().estado == 'revision'
+            && !('importado' in nuevo())
+            && nuevo().historial.size() == 1
+            && nuevo().historial[0].estado == 'revision'
+            && nuevo().historial[0].por == correo()
+            && get(rutaObra()).data.contadorCortes == nuevo().numeroSec - 1
+            && getAfter(rutaObra()).data.contadorCortes == nuevo().numeroSec;
+        }
+        function importacion() {
+          return esAdmin() && nuevo().importado == true
+            && nuevo().estado in ['revision', 'aprobacion', 'pagado'];
+        }
+
+        function transicion(de, a) {
+          return (de == 'revision'   && a == 'aprobacion' && registra())
+              || (de == 'aprobacion' && a == 'revision'   && esAdmin())
+              || (de in ['revision', 'aprobacion'] && a == 'pagado' && esAdmin())
+              || (de == 'pagado'     && a == 'aprobacion' && esAdmin())
+              || (de in ['revision', 'aprobacion'] && a == 'anulado' && esAdmin())
+              || (de == 'revision'   && a == 'anulado' && registra()
+                  && resource.data.creadoPor == correo());
+        }
+        function historialMasUno() {
+          let n = resource.data.historial.size();
+          let h = nuevo().historial;
+          return h.size() == n + 1
+            && h[0:n] == resource.data.historial
+            && h[n].estado == nuevo().estado
+            && h[n].por == correo()
+            && h[n].fecha is string;
+        }
+
+        allow read: if habilitado();
+        allow create: if nuevo().keys().hasOnly(campos())
+          && corteId == 'n' + string(nuevo().numeroSec)
+          && nuevo().creadoPor == correo()
+          && nuevo().ultimoCambio == request.time
+          && (registroNormal() || importacion());
+        allow update: if habilitado()
+          && nuevo().diff(resource.data).affectedKeys()
+               .hasOnly(['estado', 'historial', 'ultimoCambio', 'anuladoPor', 'motivoAnulacion'])
+          && nuevo().ultimoCambio == request.time
+          && historialMasUno()
+          && transicion(resource.data.estado, nuevo().estado)
+          && (nuevo().estado != 'anulado'
+              || (nuevo().anuladoPor == correo()
+                  && nuevo().motivoAnulacion is string
+                  && nuevo().motivoAnulacion.size() >= 3));
+        allow delete: if false;
+      }
+    }
+  }
+}
