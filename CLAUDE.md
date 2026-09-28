@@ -12,7 +12,11 @@ Desarrollada para **Ingeurbe**. Usuaria principal: Viviana García.
 
 | Archivo | Qué es |
 |---|---|
-| `eurbe.html` | **La aplicación completa.** Un solo archivo, ~355 KB, ~3100 líneas. Logos en base64, todo el CSS y el JS embebidos. |
+| `index.html` | **La aplicación en la nube** (GitHub Pages + Firebase). Copia de `eurbe.html` con ganchos; la lógica nueva va en `js/`. |
+| `js/*.js` | Módulos de la versión en la nube (ver «Versión en la nube»). |
+| `firestore.rules` | Permisos en el servidor. Se publican con `npx firebase deploy --only firestore:rules`. |
+| `firebase-config.js` | Configuración web de Firebase (pública por diseño). |
+| `eurbe.html` | **Versión local sin nube** (`file://`, cortes en `localStorage`). Un solo archivo, ~245 KB, ~3.350 líneas. Logos en base64, todo el CSS y el JS embebidos. Tiene «Exportar cortes (JSON)» para pasar los cortes a la nube. |
 | `ifc_converter_v2.py` | Convertidor IFC → JSON. El que se debe usar. |
 | `ifc_converter.py` | Versión antigua, con nombres de parámetros fijos. **Obsoleto.** |
 | `PZA-MODELO-FEDERADO-eurbe.json` | Modelo federado convertido (16.604 elementos, 28,7 MB). |
@@ -192,6 +196,50 @@ duplicados por `globalId` para no cobrar dos veces un elemento que quedó en dos
 
 Las columnas de **Edificación** (Torre 1, Torre 2, zona comunal…) aparecen solo si el
 modelo distingue más de una. Lo mismo el filtro en el visor y en pendientes.
+
+---
+
+## Versión en la nube
+
+Diseño: `docs/diseno-nube.md`. Plan: `docs/superpowers/plans/2026-09-28-eurbe-nube.md`.
+
+- **Firestore** (plan Spark, sin tarjeta): `accesos/{correo}` (rol `admin` |
+  `registrador` | `consulta`), `obras/{id}` (con `modeloVigente` y `contadorCortes`),
+  `obras/{id}/modelos/{v}` + `trozos/{n}` (modelo gzip en trozos de 900 KB, huella
+  SHA-256), `obras/{id}/cortes/n{numeroSec}`.
+- **Auth**: correo y contraseña, correo verificado obligatorio. Microsoft queda para
+  después (registro en Entra por TI).
+- **Cortes**: número asignado por transacción sobre `contadorCortes`. Nunca se borran:
+  se **anulan** con motivo. `STATE.cuts` solo tiene activos; los anulados van en
+  `STATE.cutsAnulados` y no cuentan en nada. Cada cambio de estado añade una entrada
+  a `historial`; las reglas impiden reescribirlo.
+- **Modelo una sola vez**: el paquete es el mismo objeto que recibe `loadModel()`
+  (Z-up, ya mapeado) y lleva su `paramMap`. Cada navegador guarda la versión vigente
+  en IndexedDB (`js/cache-modelo.js`) y solo descarga si cambia la huella.
+- **Ganchos entre `index.html` y `js/`**: `entregarModelo(data)` sustituye a
+  `loadModel` en las rutas de carga de archivo (el admin sube la versión);
+  `window.alModeloCargado()` sustituye a `loadCutsFromStorage()`. `registerCut`,
+  `cambiarEstadoCorte` y `deleteCut` los redefine `js/cortes-nube.js`.
+- **Sin `enablePersistence` de Firestore**: con los trozos del modelo en caché
+  persistente cada escritura tardaba ~16 s. La copia offline es la de `CacheModelo`.
+- **Módulos**: `texto.js` (`esc`), `cortes-logica.js` (espejo de las reglas, puro),
+  `modelo-paquete.js` (puro), `cache-modelo.js`, `nube.js` (todo Firebase, sin DOM),
+  `cortes-nube.js`, `accesos-ui.js`, `importar-ui.js`, `sin-conexion.js`,
+  `ui-nube.js` (arranque y pantallas).
+
+### Pruebas
+
+```bash
+export PATH="$PWD/.tools/jdk/bin:$PATH"   # JDK 21 portátil (no va a git)
+npm run test:unit                          # módulos puros
+npm run test:rules                         # reglas contra el emulador
+npm run emuladores   # en otra terminal, y luego:
+npx playwright test                        # humo e2e (usa http-server en :5173)
+```
+
+Con los emuladores ya levantados, `npm run test:rules` choca por puerto: usar
+`node --test "tests/rules/*.test.mjs"`. Contra `localhost`, `nube.js` se conecta
+solo a los emuladores (proyecto `demo-eurbe`).
 
 ---
 
