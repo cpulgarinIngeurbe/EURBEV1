@@ -35,8 +35,11 @@
   async function leerCualquiera(obraId) {
     try { return (await op('readonly', s => s.get(obraId))) || null; } catch (e) { return null; }
   }
+  async function borrar(obraId) {
+    try { await op('readwrite', s => s.delete(obraId)); } catch (e) {}
+  }
   // Con un registro por obra no hay nada extra que borrar; se deja por contrato.
   async function podar() {}
 
-  window.CacheModelo = { leer, guardar, leerCualquiera, podar };
+  window.CacheModelo = { leer, guardar, leerCualquiera, borrar, podar };
 })();

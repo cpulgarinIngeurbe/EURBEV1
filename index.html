@@ -784,7 +784,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
           </div>
           <div class="form-group">
             <label>Observaciones (opcional)</label>
-            <textarea id="cut-notes-input" placeholder="Notas del corte..."></textarea>
+            <textarea id="cut-notes-input" maxlength="2000" placeholder="Notas del corte..."></textarea>
           </div>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="btn btn-primary btn-full" onclick="registerCut()" id="btn-register">
@@ -2239,19 +2239,19 @@ function renderHistory() {
 
   list.innerHTML = STATE.cuts.slice().reverse().map(cut => {
     const qtyStr = Object.entries(cut.qtyByUnit)
-      .map(([u, q]) => `${q.toFixed(2)} ${u}`).join(' · ') || '—';
+      .map(([u, q]) => `${(+q || 0).toFixed(2)} ${esc(u)}`).join(' · ') || '—';
 
     const est = estadoDeCorte(cut), info = CUT_ESTADOS[est];
 
     return `
     <div class="cut-card">
-      <div class="cut-card-header" onclick="toggleCutCard('cut-${cut.id}')">
-        <div class="cut-number">${cut.number}</div>
+      <div class="cut-card-header" onclick="toggleCutCard('cut-${esc(cut.id)}')">
+        <div class="cut-number">${esc(cut.number)}</div>
         <div class="cut-meta">
-          <strong>${cut.nivel || cut.actividad || '—'}</strong>
-          <span>${cut.date}</span>
+          <strong>${esc(cut.nivel || cut.actividad || '—')}</strong>
+          <span>${esc(cut.date)}</span>
         </div>
-        <div class="cut-qty">${qtyStr}<span>${cut.totalElements} elem.</span></div>
+        <div class="cut-qty">${qtyStr}<span>${esc(cut.totalElements)} elem.</span></div>
       </div>
       <div class="cut-estado-row">
         <span class="cut-estado-pill" style="color:${info.color};background:${info.bg};border-color:${info.color}33">
@@ -2266,18 +2266,18 @@ function renderHistory() {
           </select>` : '';
         })()}
       </div>
-      <div class="cut-card-body" id="cut-${cut.id}">
-        <div class="cut-el-count">📦 ${cut.totalElements} elementos registrados</div>
-        <div class="prop-row"><div class="prop-label">Actividad</div><div class="prop-value">${cut.actividad || '—'}</div></div>
-        <div class="prop-row"><div class="prop-label">Grupo</div><div class="prop-value">${cut.descGrupo || '—'}</div></div>
-        <div class="prop-row"><div class="prop-label">Nivel</div><div class="prop-value">${cut.nivel || '—'}</div></div>
+      <div class="cut-card-body" id="cut-${esc(cut.id)}">
+        <div class="cut-el-count">📦 ${esc(cut.totalElements)} elementos registrados</div>
+        <div class="prop-row"><div class="prop-label">Actividad</div><div class="prop-value">${esc(cut.actividad || '—')}</div></div>
+        <div class="prop-row"><div class="prop-label">Grupo</div><div class="prop-value">${esc(cut.descGrupo || '—')}</div></div>
+        <div class="prop-row"><div class="prop-label">Nivel</div><div class="prop-value">${esc(cut.nivel || '—')}</div></div>
         <div class="prop-row"><div class="prop-label">Cantidad total</div><div class="prop-value accent">${qtyStr}</div></div>
         <div class="prop-row"><div class="prop-label">Registrado por</div><div class="prop-value">${esc(cut.creadoPor || '—')}</div></div>
         <div class="prop-row"><div class="prop-label">Historial</div><div class="prop-value">${(cut.historial || []).map(h =>
           `${esc((CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl)} · ${esc(h.por)} · ${esc((h.fecha || '').slice(0,10))}${h.motivo ? ' · ' + esc(h.motivo) : ''}`).join('<br>')}</div></div>
         ${cut.notes ? `<div class="prop-row"><div class="prop-label">Observaciones</div><div class="prop-value">${esc(cut.notes)}</div></div>` : ''}
         <div class="cut-actions">
-          <button class="btn btn-secondary btn-sm" onclick="highlightCut('${cut.id}')">👁 Ver en modelo</button>
+          <button class="btn btn-secondary btn-sm" onclick="highlightCut('${esc(cut.id)}')">👁 Ver en modelo</button>
           ${EurbeCortes.destinosPermitidos(SESION.rol, cut, SESION.correo).includes('anulado') && !SESION.soloLectura
             ? `<button class="btn btn-danger btn-sm" onclick="deleteCut('${esc(cut.id)}')">⊘ Anular</button>` : ''}
         </div>
@@ -2805,15 +2805,15 @@ function renderPendientes() {
     const pendCls = r.pendiente > 0 ? 'qty-pending' : 'qty-done';
     return `<tr>
       <td>
-        <div style="font-weight:500;color:var(--c-text);line-height:1.3">${r.actividad || '—'}</div>
+        <div style="font-weight:500;color:var(--c-text);line-height:1.3">${esc(r.actividad || '—')}</div>
         <div class="progress-mini"><div class="progress-mini-fill" style="width:${pctBar}%"></div></div>
-        <div style="font-size:9px;color:var(--c-text3);margin-top:2px">${r.pctDone.toFixed(0)}% ejecutado</div>
+        <div style="font-size:9px;color:var(--c-text3);margin-top:2px">${esc(r.pctDone.toFixed(0))}% ejecutado</div>
       </td>
-      ${colEdif ? `<td style="color:var(--c-blue);font-weight:600;font-size:10px">${r.edificacion || '—'}</td>` : ''}
-      <td style="color:var(--c-text2)">${r.nivel || '—'}</td>
-      <td>${r.totalQty.toFixed(2)} <span class="chip-unit">${esc(r.unidad)}</span></td>
-      <td class="qty-done">${r.ejecutadoQty.toFixed(2)}</td>
-      <td class="${pendCls}">${r.pendiente.toFixed(2)}</td>
+      ${colEdif ? `<td style="color:var(--c-blue);font-weight:600;font-size:10px">${esc(r.edificacion || '—')}</td>` : ''}
+      <td style="color:var(--c-text2)">${esc(r.nivel || '—')}</td>
+      <td>${esc(r.totalQty.toFixed(2))} <span class="chip-unit">${esc(r.unidad)}</span></td>
+      <td class="qty-done">${esc(r.ejecutadoQty.toFixed(2))}</td>
+      <td class="${pendCls}">${esc(r.pendiente.toFixed(2))}</td>
     </tr>`;
   }).join('');
 }
@@ -2884,7 +2884,7 @@ function buildActivityLegend() {
                      .replace(' Torre 2','').replace('Torre 2','').substring(0,32);
     return `<div class="act-legend-item">
       <div class="act-dot" style="background:${hex}"></div>
-      <span title="${act}">${short}</span>
+      <span title="${esc(act)}">${esc(short)}</span>
     </div>`;
   }).join('');
 }
@@ -2922,7 +2922,7 @@ async function exportExcel() {
   const summaryRows = [['N° Corte','Fecha','Estado','Edificación','Nivel','Actividad','Desc. Grupo',
                         'Total Elementos','Cantidad','Observaciones','Registrado por','Historial de estados']];
   STATE.cuts.forEach(cut => {
-    const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${q.toFixed(2)} ${u}`).join(' | ');
+    const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${(+q || 0).toFixed(2)} ${u}`).join(' | ');
     summaryRows.push([cut.number, cut.date, CUT_ESTADOS[estadoDeCorte(cut)].lbl,
       cut.edificacion || '', cut.nivel, cut.actividad,
       cut.descGrupo, cut.totalElements, qtyStr, cut.notes || '', cut.creadoPor || '', (cut.historial || []).map(h => `${(CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl} (${h.por}, ${(h.fecha || '').slice(0,10)})`).join(' → ')]);
@@ -3249,13 +3249,13 @@ async function exportPDF() {
   const date = new Date().toLocaleDateString('es-CO');
 
   const cutsHtml = STATE.cuts.map(cut => {
-    const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${q.toFixed(2)} ${u}`).join(', ');
+    const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${(+q || 0).toFixed(2)} ${esc(u)}`).join(', ');
     const inf = CUT_ESTADOS[estadoDeCorte(cut)];
     return `<tr>
-      <td>${cut.number}</td><td>${cut.date}</td>
+      <td>${esc(cut.number)}</td><td>${esc(cut.date)}</td>
       <td style="color:${inf.color};font-weight:600;white-space:nowrap">● ${inf.lbl}</td>
-      <td>${cut.nivel || '—'}</td>
-      <td>${cut.actividad || '—'}</td><td>${cut.totalElements}</td>
+      <td>${esc(cut.nivel || '—')}</td>
+      <td>${esc(cut.actividad || '—')}</td><td>${esc(cut.totalElements)}</td>
       <td>${qtyStr}</td><td>${esc(cut.notes)}</td><td>${esc(cut.creadoPor || '')}</td>
     </tr>`;
   }).join('');
@@ -3268,10 +3268,10 @@ async function exportPDF() {
 
     const colEdif = g.mostrarEdificacion;
     const filas = g.rows.map(r => `<tr>
-        ${colEdif ? `<td class="edif">${r.edificacion || '—'}</td>` : ''}
-        <td class="act">${r.actividad}${r.grupo ? `<small>${r.grupo}</small>` : ''}</td>
-        <td class="num">${r.elementos}</td>
-        <td class="qty">${r.cantidad.toFixed(2)} <span class="u">${r.unidad}</span></td>
+        ${colEdif ? `<td class="edif">${esc(r.edificacion || '—')}</td>` : ''}
+        <td class="act">${esc(r.actividad)}${r.grupo ? `<small>${esc(r.grupo)}</small>` : ''}</td>
+        <td class="num">${esc(r.elementos)}</td>
+        <td class="qty">${esc(r.cantidad.toFixed(2))} <span class="u">${esc(r.unidad)}</span></td>
       </tr>`).join('');
 
     const filaTotal = `<tr class="total">
@@ -3285,23 +3285,23 @@ async function exportPDF() {
          y no se incluyen en las cantidades.</p>` : '';
 
     const img = images[cut.id]
-      ? `<img class="shot" src="${images[cut.id]}" alt="Vista 3D ${cut.number}">`
+      ? `<img class="shot" src="${images[cut.id]}" alt="Vista 3D ${esc(cut.number)}">`
       : `<div class="noshot">Sin vista 3D disponible para este corte<br>
          <small>Los elementos no están presentes en el modelo cargado actualmente.</small></div>`;
 
     return `<div class="ficha">
       <div class="ficha-head">
-        <span class="badge">${cut.number}</span>
-        <span class="ficha-title">${cut.nivel || cut.actividad || 'Corte de obra'}</span>
+        <span class="badge">${esc(cut.number)}</span>
+        <span class="ficha-title">${esc(cut.nivel || cut.actividad || 'Corte de obra')}</span>
         <span class="ficha-estado" style="color:${CUT_ESTADOS[estadoDeCorte(cut)].color};
               background:${CUT_ESTADOS[estadoDeCorte(cut)].bg}">● ${CUT_ESTADOS[estadoDeCorte(cut)].lbl}</span>
-        <span class="ficha-date">${cut.date || ''}</span>
+        <span class="ficha-date">${esc(cut.date || '')}</span>
       </div>
       <table class="ficha-data"><tbody>
-        <tr><th>Edificación</th><td>${cut.edificacion || '—'}</td>
-            <th>Nivel</th><td>${cut.nivel || '—'}</td></tr>
-        <tr><th>Desc. Grupo</th><td>${cut.descGrupo || '—'}</td>
-            <th>Elementos</th><td>${cut.totalElements}</td></tr>
+        <tr><th>Edificación</th><td>${esc(cut.edificacion || '—')}</td>
+            <th>Nivel</th><td>${esc(cut.nivel || '—')}</td></tr>
+        <tr><th>Desc. Grupo</th><td>${esc(cut.descGrupo || '—')}</td>
+            <th>Elementos</th><td>${esc(cut.totalElements)}</td></tr>
         <tr><th>Observaciones</th><td colspan="3">${esc(cut.notes) || '—'}</td></tr>
         <tr><th>Registrado por</th><td>${esc(cut.creadoPor || '—')}</td>
             <th>Historial</th><td>${esc((cut.historial || []).map(h => `${(CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl} (${h.por}, ${(h.fecha || '').slice(0,10)})`).join(' → ')) || '—'}</td></tr>
@@ -3324,10 +3324,10 @@ async function exportPDF() {
   const gGlobal = groupByActivity(todosLosElementos, elById);
   const colEdifG = gGlobal.mostrarEdificacion;
   const consolidadoHtml = gGlobal.rows.map(r => `<tr>
-      ${colEdifG ? `<td class="edif">${r.edificacion || '—'}</td>` : ''}
-      <td class="act">${r.actividad}${r.grupo ? `<small>${r.grupo}</small>` : ''}</td>
-      <td class="num">${r.elementos}</td>
-      <td class="qty">${r.cantidad.toFixed(2)} <span class="u">${r.unidad}</span></td>
+      ${colEdifG ? `<td class="edif">${esc(r.edificacion || '—')}</td>` : ''}
+      <td class="act">${esc(r.actividad)}${r.grupo ? `<small>${esc(r.grupo)}</small>` : ''}</td>
+      <td class="num">${esc(r.elementos)}</td>
+      <td class="qty">${esc(r.cantidad.toFixed(2))} <span class="u">${esc(r.unidad)}</span></td>
     </tr>`).join('') + `<tr class="total">
       <td${colEdifG ? ' colspan="2"' : ''}>TOTAL EJECUTADO</td><td class="num">${gGlobal.totalElementos}</td>
       <td class="qty">${totalesToText(gGlobal.totales)}</td></tr>`;
@@ -3335,11 +3335,11 @@ async function exportPDF() {
   const pendRows = buildPendientesData('','').sort((a,b)=>b.pendiente-a.pendiente);
   const colEdifP = [...new Set(pendRows.map(r => r.edificacion).filter(Boolean))].length > 1;
   const pendHtml = pendRows.map(r => `<tr>
-    ${colEdifP ? `<td class="edif">${r.edificacion || '—'}</td>` : ''}
-    <td>${r.actividad}</td><td>${r.nivel}</td><td>${r.unidad}</td>
-    <td>${r.totalQty.toFixed(2)}</td><td>${r.ejecutadoQty.toFixed(2)}</td>
-    <td style="color:#E05050;font-weight:bold">${r.pendiente.toFixed(2)}</td>
-    <td>${r.pctDone.toFixed(1)}%</td>
+    ${colEdifP ? `<td class="edif">${esc(r.edificacion || '—')}</td>` : ''}
+    <td>${esc(r.actividad)}</td><td>${esc(r.nivel)}</td><td>${esc(r.unidad)}</td>
+    <td>${esc(r.totalQty.toFixed(2))}</td><td>${esc(r.ejecutadoQty.toFixed(2))}</td>
+    <td style="color:#E05050;font-weight:bold">${esc(r.pendiente.toFixed(2))}</td>
+    <td>${esc(r.pctDone.toFixed(1))}%</td>
   </tr>`).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">

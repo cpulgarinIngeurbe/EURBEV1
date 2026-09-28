@@ -67,13 +67,19 @@
     $('n-salir').onclick = () => Nube.salir();
   }
 
+  const esDeRed = e => /unavailable|network|offline|deadline/i.test(((e && e.code) || '') + ' ' + ((e && e.message) || ''));
+  function falloDeCarga(e, alternativa) {
+    if (esDeRed(e) && window.modoSinConexion) return window.modoSinConexion(Nube.traducirError(e));
+    alternativa(Nube.traducirError(e));
+  }
+
   async function trasSesion(user) {
     if (!user) { pantallaEntrada(); return; }
     SESION.correo = Nube.correoDe(user);
     if (!user.emailVerified) { pantallaVerificar(SESION.correo); return; }
     let acc;
     try { acc = await Nube.miAcceso(); }
-    catch (e) { pantallaEntrada(Nube.traducirError(e)); return; }
+    catch (e) { falloDeCarga(e, pantallaEntrada); return; }
     if (!acc || !acc.activo) { pantallaSinAcceso(SESION.correo); return; }
     SESION.rol = acc.rol; SESION.nombre = acc.nombre || SESION.correo;
     elegirObra();
@@ -83,7 +89,7 @@
   async function elegirObra() {
     let obras;
     try { obras = await Nube.listarObras(); }
-    catch (e) { pantallaEntrada(Nube.traducirError(e)); return; }
+    catch (e) { falloDeCarga(e, pantallaEntrada); return; }
     const ultima = (() => { try { return localStorage.getItem('eurbe_ultima_obra'); } catch (e) { return null; } })();
     // La ultima obra abierta se reabre directo («Cambiar de obra» borra esa
     // preferencia). Con una sola obra tambien se salta, salvo el admin, que
@@ -121,13 +127,10 @@
 
   async function abrirObra(obra) {
     SESION.obraId = obra.id; SESION.obraNombre = obra.nombre;
-    try { localStorage.setItem('eurbe_ultima_obra', obra.id); } catch (e) {}
     if (!obra.modeloVigente) {
-      if (SESION.rol === 'admin') { iniciarSubida(); return; }
-      pantalla(`${LOGO()}<h2>${esc(obra.nombre)}</h2>
-        <p class="sub">Esta obra aún no tiene modelo. El administrador debe cargarlo.</p>
-        <button class="btn btn-secondary" id="n-volver">Volver</button>`);
-      $('n-volver').onclick = elegirObra;
+      if (SESION.rol === 'admin') { recordarObra(obra.id); iniciarSubida(); return; }
+      olvidarObra();
+      pantallaObraNoAbre(obra, 'Esta obra aún no tiene modelo. El administrador debe cargarlo.');
       return;
     }
     try {
@@ -137,15 +140,32 @@
       SESION.versionId = meta.id; SESION.obraVersionCargada = meta.id;
       try { localStorage.setItem('eurbe_ultima_version', JSON.stringify(
         { obraId: obra.id, obraNombre: obra.nombre, versionId: meta.id, huella: meta.huella, paramMap: meta.paramMap })); } catch (e) {}
+      recordarObra(obra.id);
       ocultarPantalla();
       data.meta = Object.assign({}, data.meta, { sourceFile: obra.nombre + ' · ' + (meta.archivoOriginal || '') });
       loadModel(data);
       vigilarVersion(obra.id);
     } catch (e) {
-      pantalla(`${LOGO()}<h2>${esc(obra.nombre)}</h2><p class="sub">${esc(Nube.traducirError(e))}</p>
-        <button class="btn btn-secondary" id="n-volver">Volver</button>`);
-      $('n-volver').onclick = elegirObra;
+      olvidarObra();
+      if (esDeRed(e) && window.modoSinConexion) return window.modoSinConexion(Nube.traducirError(e));
+      pantallaObraNoAbre(obra, Nube.traducirError(e));
     }
+  }
+
+  function recordarObra(id) { try { localStorage.setItem('eurbe_ultima_obra', id); } catch (e) {} }
+  function olvidarObra() { try { localStorage.removeItem('eurbe_ultima_obra'); } catch (e) {} }
+  // Volver no puede reabrir la misma obra (se olvido la preferencia); el admin
+  // puede ademas subir una version nueva si la vigente no abre.
+  function pantallaObraNoAbre(obra, msg) {
+    pantalla(`${LOGO()}<h2>${esc(obra.nombre)}</h2><p class="sub">${esc(msg)}</p>
+      <div class="fila">
+        <button class="btn btn-secondary" id="n-volver">Volver</button>
+        ${SESION.rol === 'admin' ? '<button class="btn btn-primary" id="n-subir">Subir versión</button>' : ''}
+      </div>
+      <p style="margin-top:12px"><button class="enlace" id="n-salir">Salir</button></p>`);
+    $('n-volver').onclick = elegirObra;
+    $('n-salir').onclick = () => Nube.salir();
+    if ($('n-subir')) $('n-subir').onclick = () => { recordarObra(obra.id); iniciarSubida(); };
   }
 
   // Copia local si coincide la huella; si no, descarga (un reintento si la huella falla)
@@ -153,7 +173,8 @@
     const local = await CacheModelo.leer(obraId, meta.id, meta.huella);
     if (local) {
       progreso('Abriendo copia guardada…', 1);
-      return EurbePaquete.desempaquetar([local], meta.huella);
+      try { return await EurbePaquete.desempaquetar([local], meta.huella); }
+      catch (e) { await CacheModelo.borrar(obraId); }   // dañada: se descarga de nuevo
     }
     for (let intento = 1; ; intento++) {
       const trozos = await Nube.descargarTrozos(obraId, meta, f => progreso('Descargando modelo…', f));

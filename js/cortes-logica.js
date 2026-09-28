@@ -70,7 +70,7 @@
       maxSec = Math.max(maxSec, n);
       const estado = ACTIVOS.includes(ct.estado) ? ct.estado : 'revision';
       docs.push({ id: 'n' + n, datos: {
-        numeroSec: n, number: numeroCorte(n), date: ct.date || '', notes: ct.notes || '',
+        numeroSec: n, number: numeroCorte(n), date: String(ct.date || '').slice(0, 30), notes: String(ct.notes || '').slice(0, 2000),
         elementIds: ct.elementIds || [], totalElements: ct.totalElements || (ct.elementIds || []).length,
         qtyByUnit: ct.qtyByUnit || {}, actividad: ct.actividad || '', nivel: ct.nivel || '',
         edificacion: ct.edificacion || '', descGrupo: ct.descGrupo || '',
@@ -83,8 +83,22 @@
     return { docs, omitidos, faltantes, maxSec };
   }
 
+  // Reparte documentos en lotes que respetan los limites de una escritura por
+  // lotes de Firestore (500 operaciones, 10 MiB): 400 docs y ~maxBytes de JSON.
+  function lotesPorTamano(docs, maxBytes) {
+    const lotes = [];
+    let actual = [], tam = 0;
+    for (const d of docs) {
+      const t = JSON.stringify(d).length;
+      if (actual.length && (actual.length >= 400 || tam + t > maxBytes)) { lotes.push(actual); actual = []; tam = 0; }
+      actual.push(d); tam += t;
+    }
+    if (actual.length) lotes.push(actual);
+    return lotes;
+  }
+
   const api = { TRANSICIONES, ACTIVOS, destinosPermitidos, numeroCorte, numeroSecDe, separar,
-                enOtrosCortes, elementosFaltantes, prepararImportacion };
+                enOtrosCortes, elementosFaltantes, prepararImportacion, lotesPorTamano };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.EurbeCortes = api;
 })(typeof window !== 'undefined' ? window : globalThis);

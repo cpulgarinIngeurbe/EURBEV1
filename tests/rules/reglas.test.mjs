@@ -203,3 +203,37 @@ test('tras importar hasta el 2, el registro normal es el 3', async () => {
   const n = await assertSucceeds(registrar(db, ADMIN));
   if (n !== 3) throw new Error('numero ' + n);
 });
+
+// ── Revisión final: tipos, número y contador ──
+async function registrarCon(db, por, cambios) {
+  return runTransaction(db, async tx => {
+    const obra = doc(db, 'obras/o1');
+    const n = (await tx.get(obra)).data().contadorCortes + 1;
+    tx.update(obra, { contadorCortes: n });
+    tx.set(doc(db, 'obras/o1/cortes/n' + n), { ...corteBase(n, por), ...cambios(n) });
+  });
+}
+test('no se puede falsificar el número visible del corte', async () => {
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ number: 'Corte 99' })));
+});
+test('campos de texto deben ser texto', async () => {
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ nivel: 5 })));
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ qtyByUnit: 'x' })));
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ elementIds: 'g1' })));
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ totalElements: '2' })));
+});
+test('no se puede nacer anulado de hecho (anuladoPor al crear)', async () => {
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ anuladoPor: REG })));
+});
+test('registrador no puede subir el contador sin crear el corte', async () => {
+  await assertFails(updateDoc(doc(ctx(REG), 'obras/o1'), { contadorCortes: 1 }));
+});
+test('número de dos cifras y de tres cifras válidos', async () => {
+  await env.withSecurityRulesDisabled(async c => { await updateDoc(doc(c.firestore(), 'obras/o1'), { contadorCortes: 9 }); });
+  await assertSucceeds(registrar(ctx(REG), REG));
+  await env.withSecurityRulesDisabled(async c => { await updateDoc(doc(c.firestore(), 'obras/o1'), { contadorCortes: 99 }); });
+  await assertSucceeds(registrar(ctx(REG), REG));
+});
+test('resúmenes largos de una selección grande se aceptan', async () => {
+  await assertSucceeds(registrarCon(ctx(REG), REG, () => ({ actividad: 'Actividad larga / '.repeat(600) })));
+});

@@ -62,3 +62,17 @@ test('prepararImportacion conserva estado, omite repetidos y sin número', () =>
   assert.deepEqual(r.faltantes, [{ number: 'Corte 02', faltan: 1 }]);
   assert.equal(r.maxSec, 2);
 });
+test('prepararImportacion recorta notas a 2000 caracteres (límite de las reglas)', () => {
+  const r = L.prepararImportacion([{ number: 'Corte 01', notes: 'x'.repeat(2500), elementIds: [] }], new Set(), new Set(), 'a@x', 'T');
+  assert.equal(r.docs[0].datos.notes.length, 2000);
+});
+test('lotesPorTamano no pasa del tamaño ni de 400 documentos por lote', () => {
+  const grande = { id: 'n1', datos: { elementIds: Array(20000).fill('0123456789abcdefghijkl') } };  // ~0,5 MB
+  const chico = i => ({ id: 'n' + i, datos: { notes: 'x' } });
+  const lotes = L.lotesPorTamano([grande, grande, grande, ...Array.from({ length: 900 }, (_, i) => chico(i))], 1024 * 1024);
+  for (const l of lotes) {
+    assert.ok(l.length <= 400);
+    assert.ok(l.length === 1 || JSON.stringify(l).length <= 1024 * 1024);
+  }
+  assert.equal(lotes.flat().length, 903);
+});

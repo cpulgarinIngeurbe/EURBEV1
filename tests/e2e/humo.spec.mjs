@@ -30,7 +30,7 @@ test.beforeAll(async () => {
 
 test('flujo completo: obra, modelo una vez, registro simultáneo, notas seguras', async ({ browser }) => {
   const a = await (await browser.newContext()).newPage();
-  a.on('dialog', d => d.accept());   // aviso de duplicados u otros confirm()
+  a.on('dialog', d => { console.log('DLG a:', d.message().slice(0, 200)); d.accept(); });   // aviso de duplicados u otros confirm()
   await entrar(a, 'admin@ingeurbe.com');
   await a.fill('#n-nueva', 'Obra Humo');
   await a.click('#n-crear-obra');
@@ -46,7 +46,7 @@ test('flujo completo: obra, modelo una vez, registro simultáneo, notas seguras'
 
   // Registrador en otro navegador
   const r = await (await browser.newContext()).newPage();
-  r.on('dialog', d => d.accept());
+  r.on('dialog', d => { console.log('DLG r:', d.message().slice(0, 200)); d.accept(); });
   await entrar(r, 'reg@ingeurbe.com');
   await expect(r.locator('#app')).toBeVisible({ timeout: 60000 });
 
@@ -67,4 +67,32 @@ test('flujo completo: obra, modelo una vez, registro simultáneo, notas seguras'
 test('cuenta sin acceso no entra', async ({ page }) => {
   await entrar(page, 'nadie@ingeurbe.com');
   await expect(page.getByText('No tienes acceso a E-Urbe')).toBeVisible();
+});
+
+test('campos de un corte escritos a mano por un registrador no ejecutan código en el admin', async ({ browser }) => {
+  const r = await (await browser.newContext()).newPage();
+  await entrar(r, 'reg@ingeurbe.com');
+  await expect(r.locator('#app')).toBeVisible({ timeout: 60000 });
+  // Escritura directa, saltándose la interfaz (lo que haría alguien desde devtools)
+  const x = '<img src=x onerror="window.__xss2=1">';
+  await r.evaluate(async x => {
+    const db = Nube._db(), obra = db.doc('obras/' + SESION.obraId), yo = SESION.correo;
+    await db.runTransaction(async tx => {
+      const n = (await tx.get(obra)).data().contadorCortes + 1;
+      tx.update(obra, { contadorCortes: n });
+      tx.set(db.doc(`obras/${SESION.obraId}/cortes/n${n}`), {
+        numeroSec: n, number: EurbeCortes.numeroCorte(n), date: '2026-09-28', notes: '', elementIds: ['q'], totalElements: 1,
+        qtyByUnit: { [x]: 1 }, actividad: x, nivel: x, edificacion: x, descGrupo: x, registeredAt: 'r',
+        estado: 'revision', creadoPor: yo, modeloVersion: '', historial: [{ estado: 'revision', por: yo, fecha: 'f' }],
+        ultimoCambio: firebase.firestore.FieldValue.serverTimestamp() });
+    });
+  }, x);
+  const a = await (await browser.newContext()).newPage();
+  await entrar(a, 'admin@ingeurbe.com');
+  await a.getByText('Obra Humo').click();   // el admin ve la lista de obras en un navegador nuevo
+  await expect(a.locator('#app')).toBeVisible({ timeout: 60000 });
+  await expect(a.locator('#history-list .cut-card')).not.toHaveCount(0, { timeout: 15000 });
+  await a.locator('#history-list .cut-card-header').first().click();
+  await a.waitForTimeout(1000);
+  expect(await a.evaluate(() => window.__xss2)).toBeUndefined();
 });

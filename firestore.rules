@@ -26,7 +26,9 @@ service cloud.firestore {
       allow update: if esAdmin()
         || (registra()
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['contadorCortes'])
-            && request.resource.data.contadorCortes == resource.data.contadorCortes + 1);
+            && request.resource.data.contadorCortes == resource.data.contadorCortes + 1
+            // ...y solo si en la misma operacion se crea ese corte (sin huecos)
+            && existsAfter(/databases/$(db)/documents/obras/$(obraId)/cortes/$('n' + string(request.resource.data.contadorCortes))));
       allow delete: if false;
 
       match /modelos/{versionId} {
@@ -47,6 +49,22 @@ service cloud.firestore {
           return ['numeroSec','number','date','notes','elementIds','totalElements','qtyByUnit',
                   'actividad','nivel','edificacion','descGrupo','registeredAt','estado','creadoPor',
                   'modeloVersion','historial','ultimoCambio','importado','anuladoPor','motivoAnulacion'];
+        }
+
+        // Todo lo que se pinta en pantalla o en informes llega aqui con su tipo
+        // y un tamano razonable; el numero visible queda atado a numeroSec.
+        function texto(k, max) { return nuevo()[k] is string && nuevo()[k].size() <= max; }
+        function tipos() {
+          let n = nuevo().numeroSec;
+          return n is int && n > 0
+            && ((n < 10 && nuevo().number == 'Corte 0' + string(n))
+                || (n >= 10 && nuevo().number == 'Corte ' + string(n)))
+            && texto('date', 30) && texto('notes', 2000) && texto('registeredAt', 40)
+            && texto('actividad', 20000) && texto('nivel', 20000) && texto('descGrupo', 20000)
+            && texto('edificacion', 20000) && texto('modeloVersion', 60)
+            && nuevo().elementIds is list && nuevo().totalElements is int
+            && nuevo().qtyByUnit is map && nuevo().historial is list
+            && !('anuladoPor' in nuevo()) && !('motivoAnulacion' in nuevo());
         }
 
         function registroNormal() {
@@ -88,6 +106,7 @@ service cloud.firestore {
           && corteId == 'n' + string(nuevo().numeroSec)
           && nuevo().creadoPor == correo()
           && nuevo().ultimoCambio == request.time
+          && tipos()
           && (registroNormal() || importacion());
         allow update: if habilitado()
           && nuevo().diff(resource.data).affectedKeys()

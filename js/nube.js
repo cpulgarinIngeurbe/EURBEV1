@@ -108,14 +108,30 @@
 
   // Transaccion: numero siguiente + corte. Las transacciones no se encolan sin
   // conexion: si no hay red, falla y no queda un registro pendiente.
-  function registrarCorte(obraId, datos) {
+  // Si dos personas registran a la vez, la segunda puede chocar con el corte
+  // que acaba de crear la primera: el servidor lo rechaza como permiso denegado
+  // (no como conflicto), asi que el SDK no reintenta solo. Se lee tambien el
+  // documento destino y se reintenta unas pocas veces con el contador fresco.
+  async function registrarCorte(obraId, datos) {
+    for (let intento = 1; ; intento++) {
+      try { return await intentarRegistro(obraId, datos); }
+      catch (e) {
+        const choque = e && (e.code === 'permission-denied' || e.code === 'corte-existe');
+        if (!choque || intento >= 3) throw e;
+        await new Promise(r => setTimeout(r, 150 + Math.random() * 350));
+      }
+    }
+  }
+  function intentarRegistro(obraId, datos) {
     const yo = correoDe(usuario()), ahora = new Date().toISOString();
     const obraRef = db.doc('obras/' + obraId);
     return db.runTransaction(async tx => {
       const n = ((await tx.get(obraRef)).data().contadorCortes || 0) + 1;
+      const corteRef = db.doc(`obras/${obraId}/cortes/n${n}`);
+      if ((await tx.get(corteRef)).exists) throw Object.assign(new Error('corte-existe'), { code: 'corte-existe' });
       const number = EurbeCortes.numeroCorte(n);
       tx.update(obraRef, { contadorCortes: n });
-      tx.set(db.doc(`obras/${obraId}/cortes/n${n}`), Object.assign({}, datos, {
+      tx.set(corteRef, Object.assign({}, datos, {
         numeroSec: n, number, estado: 'revision', creadoPor: yo,
         historial: [{ estado: 'revision', por: yo, fecha: ahora }],
         ultimoCambio: firebase.firestore.FieldValue.serverTimestamp(),
@@ -148,21 +164,24 @@
       creadoPor: correoDe(usuario()), fecha: new Date().toISOString() }, { merge: true });
   }
 
+  // El contador sube PRIMERO: si un lote falla a medias, los registros nuevos
+  // siguen numerando por encima de lo importado en vez de chocar con ello.
   async function importarCortes(obraId, docs, maxSec) {
-    for (let i = 0; i < docs.length; i += 400) {
-      const lote = db.batch();
-      for (const d of docs.slice(i, i + 400)) {
-        lote.set(db.doc(`obras/${obraId}/cortes/${d.id}`), Object.assign({}, d.datos,
-          { ultimoCambio: firebase.firestore.FieldValue.serverTimestamp() }));
-      }
-      await lote.commit();
-    }
     const obraRef = db.doc('obras/' + obraId);
     await db.runTransaction(async tx => {
       const actual = (await tx.get(obraRef)).data().contadorCortes || 0;
       if (maxSec > actual) tx.update(obraRef, { contadorCortes: maxSec });
     });
+    for (const lote of EurbeCortes.lotesPorTamano(docs, 8 * 1024 * 1024)) {
+      const b = db.batch();
+      for (const d of lote) {
+        b.set(db.doc(`obras/${obraId}/cortes/${d.id}`), Object.assign({}, d.datos,
+          { ultimoCambio: firebase.firestore.FieldValue.serverTimestamp() }));
+      }
+      await b.commit();
+    }
   }
+
   window.Nube = { iniciar, usuario, alCambiarSesion, entrar, crearCuenta, reenviarVerificacion,
     recuperarClave, salir, miAcceso, listarObras, crearObra, escucharObra, leerVersion,
     descargarTrozos, subirVersion, traducirError, correoDe, enLinea: () => online,
