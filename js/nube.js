@@ -148,10 +148,25 @@
       creadoPor: correoDe(usuario()), fecha: new Date().toISOString() }, { merge: true });
   }
 
+  async function importarCortes(obraId, docs, maxSec) {
+    for (let i = 0; i < docs.length; i += 400) {
+      const lote = db.batch();
+      for (const d of docs.slice(i, i + 400)) {
+        lote.set(db.doc(`obras/${obraId}/cortes/${d.id}`), Object.assign({}, d.datos,
+          { ultimoCambio: firebase.firestore.FieldValue.serverTimestamp() }));
+      }
+      await lote.commit();
+    }
+    const obraRef = db.doc('obras/' + obraId);
+    await db.runTransaction(async tx => {
+      const actual = (await tx.get(obraRef)).data().contadorCortes || 0;
+      if (maxSec > actual) tx.update(obraRef, { contadorCortes: maxSec });
+    });
+  }
   window.Nube = { iniciar, usuario, alCambiarSesion, entrar, crearCuenta, reenviarVerificacion,
     recuperarClave, salir, miAcceso, listarObras, crearObra, escucharObra, leerVersion,
     descargarTrozos, subirVersion, traducirError, correoDe, enLinea: () => online,
     escucharCortes, registrarCorte, cambiarEstado,
-    listarAccesos, guardarAcceso,
+    listarAccesos, guardarAcceso, importarCortes,
     _db: () => db };
 })();

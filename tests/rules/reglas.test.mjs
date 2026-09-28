@@ -192,3 +192,14 @@ test('admin importa corte pagado; registrador no', async () => {
   await assertSucceeds(setDoc(doc(ctx(ADMIN), 'obras/o1/cortes/n7'), imp));
   await assertFails(setDoc(doc(ctx(REG), 'obras/o1/cortes/n8'), { ...imp, numeroSec: 8, creadoPor: REG }));
 });
+
+test('tras importar hasta el 2, el registro normal es el 3', async () => {
+  const db = ctx(ADMIN);
+  const imp = n => ({ ...corteBase(n, ADMIN), importado: true, modeloVersion: '',
+    historial: [{ estado: 'revision', por: ADMIN, fecha: 'f', motivo: 'importado desde versión local' }] });
+  await assertSucceeds(setDoc(doc(db, 'obras/o1/cortes/n1'), imp(1)));
+  await assertSucceeds(setDoc(doc(db, 'obras/o1/cortes/n2'), imp(2)));
+  await assertSucceeds(updateDoc(doc(db, 'obras/o1'), { contadorCortes: 2 }));
+  const n = await assertSucceeds(registrar(db, ADMIN));
+  if (n !== 3) throw new Error('numero ' + n);
+});
