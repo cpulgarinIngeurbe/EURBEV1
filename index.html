@@ -2084,8 +2084,9 @@ function updateCutForm() {
   form.style.display = 'block';
 
   // Auto fill cut number
-  const nextNum = STATE.cuts.length + 1;
-  document.getElementById('cut-number-input').value = `Corte ${String(nextNum).padStart(2,'0')}`;
+  const todos = STATE.cuts.concat(STATE.cutsAnulados || []);
+  const nextNum = todos.reduce((m, ct) => Math.max(m, ct.numeroSec || 0), 0) + 1;
+  document.getElementById('cut-number-input').value = EurbeCortes.numeroCorte(nextNum) + ' (se confirma al guardar)';
 
   // Default date = today
   if (!document.getElementById('cut-date-input').value) {
@@ -2102,6 +2103,8 @@ const CUT_ESTADOS = {
   aprobacion: { lbl: 'En aprobación', color: '#F5892A', bg: '#FFF4EA' },
   pagado:     { lbl: 'Pagado',        color: '#5AB87A', bg: '#EEF9F1' },
 };
+// Anulado no entra en CUT_ESTADOS: esos cortes nunca estan en STATE.cuts
+const ESTADO_ANULADO = { lbl: 'Anulado', color: '#999', bg: '#f2f2f2' };
 const CUT_ESTADO_DEFECTO = 'revision';
 
 // Los cortes guardados antes de existir este campo no lo traen
@@ -2200,13 +2203,32 @@ function registerCut() {
 function renderHistory() {
   const badge = document.getElementById('cut-badge');
   badge.textContent = STATE.cuts.length;
+  const nAnul = (STATE.cutsAnulados || []).length;
+  let tog = document.getElementById('toggle-anulados');
+  if (!tog) {
+    tog = document.createElement('label');
+    tog.id = 'toggle-anulados';
+    tog.style.cssText = 'font-size:11px;color:var(--c-text3);display:block;margin:4px 0';
+    badge.parentElement.after(tog);
+  }
+  tog.innerHTML = nAnul ? `<input type="checkbox" ${window.mostrarAnulados ? 'checked' : ''}
+    onchange="window.mostrarAnulados=this.checked;renderHistory()"> Mostrar anulados (${nAnul})` : '';
 
   const empty = document.getElementById('history-empty');
   const list  = document.getElementById('history-list');
 
+  const anuladosHtml = (window.mostrarAnulados ? (STATE.cutsAnulados || []) : []).slice().reverse().map(cut => `
+    <div class="cut-card" style="opacity:.6">
+      <div class="cut-card-header">
+        <div class="cut-number" style="text-decoration:line-through">${esc(cut.number)}</div>
+        <div class="cut-meta"><strong>Anulado</strong><span>${esc(cut.anuladoPor || '')}</span></div>
+        <div class="cut-qty">${esc(cut.motivoAnulacion || '')}</div>
+      </div>
+    </div>`).join('');
+
   if (STATE.cuts.length === 0) {
-    empty.style.display = 'block';
-    list.innerHTML = '';
+    list.innerHTML = anuladosHtml;
+    empty.style.display = anuladosHtml ? 'none' : 'block';
     return;
   }
   empty.style.display = 'none';
@@ -2235,11 +2257,14 @@ function renderHistory() {
         <span class="cut-estado-pill" style="color:${info.color};background:${info.bg};border-color:${info.color}33">
           ● ${info.lbl}
         </span>
-        <select class="cut-estado-sel" onchange="cambiarEstadoCorte('${cut.id}', this.value)"
+        ${(() => {
+          const dest = EurbeCortes.destinosPermitidos(SESION.rol, cut, SESION.correo).filter(k => k !== 'anulado');
+          return dest.length && !SESION.soloLectura ? `<select class="cut-estado-sel" onchange="cambiarEstadoCorte('${esc(cut.id)}', this.value)"
                 title="Cambiar el estado de este corte">
-          ${Object.entries(CUT_ESTADOS).map(([k,v]) =>
-            `<option value="${k}"${k===est?' selected':''}>${v.lbl}</option>`).join('')}
-        </select>
+            <option value="" selected>Cambiar a…</option>
+            ${dest.map(k => `<option value="${k}">${CUT_ESTADOS[k].lbl}</option>`).join('')}
+          </select>` : '';
+        })()}
       </div>
       <div class="cut-card-body" id="cut-${cut.id}">
         <div class="cut-el-count">📦 ${cut.totalElements} elementos registrados</div>
@@ -2247,14 +2272,18 @@ function renderHistory() {
         <div class="prop-row"><div class="prop-label">Grupo</div><div class="prop-value">${cut.descGrupo || '—'}</div></div>
         <div class="prop-row"><div class="prop-label">Nivel</div><div class="prop-value">${cut.nivel || '—'}</div></div>
         <div class="prop-row"><div class="prop-label">Cantidad total</div><div class="prop-value accent">${qtyStr}</div></div>
+        <div class="prop-row"><div class="prop-label">Registrado por</div><div class="prop-value">${esc(cut.creadoPor || '—')}</div></div>
+        <div class="prop-row"><div class="prop-label">Historial</div><div class="prop-value">${(cut.historial || []).map(h =>
+          `${esc((CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl)} · ${esc(h.por)} · ${esc((h.fecha || '').slice(0,10))}${h.motivo ? ' · ' + esc(h.motivo) : ''}`).join('<br>')}</div></div>
         ${cut.notes ? `<div class="prop-row"><div class="prop-label">Observaciones</div><div class="prop-value">${esc(cut.notes)}</div></div>` : ''}
         <div class="cut-actions">
           <button class="btn btn-secondary btn-sm" onclick="highlightCut('${cut.id}')">👁 Ver en modelo</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteCut('${cut.id}')">🗑 Eliminar</button>
+          ${EurbeCortes.destinosPermitidos(SESION.rol, cut, SESION.correo).includes('anulado') && !SESION.soloLectura
+            ? `<button class="btn btn-danger btn-sm" onclick="deleteCut('${esc(cut.id)}')">⊘ Anular</button>` : ''}
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + anuladosHtml;
 }
 
 function toggleCutCard(id) {
@@ -2478,9 +2507,7 @@ function setMode(mode) {
 
 // ── PERSISTENCE ───────────────────────────────
 function saveCutsToStorage() {
-  try {
-    localStorage.setItem('eurbe_cuts', JSON.stringify(STATE.cuts));
-  } catch(e) {}
+  // En la nube los cortes viven en Firestore; nada que guardar en el navegador
 }
 
 function loadCutsFromStorage() {
@@ -3397,6 +3424,7 @@ async function exportPDF() {
 // loadModel patched below
 
 </script>
+<script src="js/cortes-nube.js"></script>
 <script src="js/ui-nube.js"></script>
 </body>
 </html>

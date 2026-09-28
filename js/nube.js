@@ -99,8 +99,49 @@
     return 'Error: ' + ((e && e.message) || e);
   }
 
+  function escucharCortes(obraId, cb) {
+    return db.collection(`obras/${obraId}/cortes`).orderBy('numeroSec')
+      .onSnapshot({ includeMetadataChanges: true }, q => {
+        online = !q.metadata.fromCache;
+        cb(q.docs.map(d => ({ id: d.id, ...d.data() })), { desdeCache: q.metadata.fromCache });
+      });
+  }
+
+  // Transaccion: numero siguiente + corte. Las transacciones no se encolan sin
+  // conexion: si no hay red, falla y no queda un registro pendiente.
+  function registrarCorte(obraId, datos) {
+    const yo = correoDe(usuario()), ahora = new Date().toISOString();
+    const obraRef = db.doc('obras/' + obraId);
+    return db.runTransaction(async tx => {
+      const n = ((await tx.get(obraRef)).data().contadorCortes || 0) + 1;
+      const number = EurbeCortes.numeroCorte(n);
+      tx.update(obraRef, { contadorCortes: n });
+      tx.set(db.doc(`obras/${obraId}/cortes/n${n}`), Object.assign({}, datos, {
+        numeroSec: n, number, estado: 'revision', creadoPor: yo,
+        historial: [{ estado: 'revision', por: yo, fecha: ahora }],
+        ultimoCambio: firebase.firestore.FieldValue.serverTimestamp(),
+      }));
+      return { id: 'n' + n, number };
+    });
+  }
+
+  function cambiarEstado(obraId, corteId, nuevo, motivo) {
+    const yo = correoDe(usuario());
+    const ref = db.doc(`obras/${obraId}/cortes/${corteId}`);
+    return db.runTransaction(async tx => {
+      const actual = (await tx.get(ref)).data();
+      const entrada = { estado: nuevo, por: yo, fecha: new Date().toISOString() };
+      if (motivo) entrada.motivo = motivo;
+      const cambio = { estado: nuevo, historial: [...(actual.historial || []), entrada],
+        ultimoCambio: firebase.firestore.FieldValue.serverTimestamp() };
+      if (nuevo === 'anulado') { cambio.anuladoPor = yo; cambio.motivoAnulacion = motivo; }
+      tx.update(ref, cambio);
+    });
+  }
+
   window.Nube = { iniciar, usuario, alCambiarSesion, entrar, crearCuenta, reenviarVerificacion,
     recuperarClave, salir, miAcceso, listarObras, crearObra, escucharObra, leerVersion,
     descargarTrozos, subirVersion, traducirError, correoDe, enLinea: () => online,
+    escucharCortes, registrarCorte, cambiarEstado,
     _db: () => db };
 })();
