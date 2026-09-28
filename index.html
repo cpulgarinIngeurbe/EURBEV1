@@ -2920,15 +2920,15 @@ async function exportExcel() {
 
   // ── Hoja 1: historial de cortes ──
   const summaryRows = [['N° Corte','Fecha','Estado','Edificación','Nivel','Actividad','Desc. Grupo',
-                        'Total Elementos','Cantidad','Observaciones']];
+                        'Total Elementos','Cantidad','Observaciones','Registrado por','Historial de estados']];
   STATE.cuts.forEach(cut => {
     const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${q.toFixed(2)} ${u}`).join(' | ');
     summaryRows.push([cut.number, cut.date, CUT_ESTADOS[estadoDeCorte(cut)].lbl,
       cut.edificacion || '', cut.nivel, cut.actividad,
-      cut.descGrupo, cut.totalElements, qtyStr, cut.notes || '']);
+      cut.descGrupo, cut.totalElements, qtyStr, cut.notes || '', cut.creadoPor || '', (cut.historial || []).map(h => `${(CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl} (${h.por}, ${(h.fecha || '').slice(0,10)})`).join(' → ')]);
   });
   const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
-  ws1['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:16},{wch:14},{wch:40},{wch:28},{wch:14},{wch:20},{wch:30}];
+  ws1['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:16},{wch:14},{wch:40},{wch:28},{wch:14},{wch:20},{wch:30},{wch:26},{wch:60}];
   XLSX.utils.book_append_sheet(wb, ws1, 'Historial Cortes');
 
   // ── Hoja 2: cantidades por actividad, corte a corte (para dinamicas) ──
@@ -3256,7 +3256,7 @@ async function exportPDF() {
       <td style="color:${inf.color};font-weight:600;white-space:nowrap">● ${inf.lbl}</td>
       <td>${cut.nivel || '—'}</td>
       <td>${cut.actividad || '—'}</td><td>${cut.totalElements}</td>
-      <td>${qtyStr}</td><td>${esc(cut.notes)}</td>
+      <td>${qtyStr}</td><td>${esc(cut.notes)}</td><td>${esc(cut.creadoPor || '')}</td>
     </tr>`;
   }).join('');
 
@@ -3303,6 +3303,8 @@ async function exportPDF() {
         <tr><th>Desc. Grupo</th><td>${cut.descGrupo || '—'}</td>
             <th>Elementos</th><td>${cut.totalElements}</td></tr>
         <tr><th>Observaciones</th><td colspan="3">${esc(cut.notes) || '—'}</td></tr>
+        <tr><th>Registrado por</th><td>${esc(cut.creadoPor || '—')}</td>
+            <th>Historial</th><td>${esc((cut.historial || []).map(h => `${(CUT_ESTADOS[h.estado] || {lbl: h.estado}).lbl} (${h.por}, ${(h.fecha || '').slice(0,10)})`).join(' → ')) || '—'}</td></tr>
       </tbody></table>
 
       <p class="sub-th">Cantidades por actividad</p>
@@ -3401,7 +3403,7 @@ async function exportPDF() {
       <span class="meta">Generado: ${date} · Total cortes: ${STATE.cuts.length} · Total elementos: ${STATE.elements.length}</span></div>
     </div>
     <h2>HISTORIAL DE CORTES</h2>
-    <table><thead><tr><th>N° Corte</th><th>Fecha</th><th>Estado</th><th>Nivel</th><th>Actividad</th><th>Elementos</th><th>Cantidad</th><th>Observaciones</th></tr></thead>
+    <table><thead><tr><th>N° Corte</th><th>Fecha</th><th>Estado</th><th>Nivel</th><th>Actividad</th><th>Elementos</th><th>Cantidad</th><th>Observaciones</th><th>Registrado por</th></tr></thead>
     <tbody>${cutsHtml}</tbody></table>
     ${STATE.cuts.length ? `<h2>CANTIDADES EJECUTADAS POR ACTIVIDAD <span class="h2sub">(consolidado de todos los cortes)</span></h2>
       <table class="desglose consolidado">
