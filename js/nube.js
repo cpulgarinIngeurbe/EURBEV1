@@ -11,12 +11,11 @@
       auth.useEmulator('http://127.0.0.1:9099', { disableWarnings: true });
       db.useEmulator('127.0.0.1', 8080);
     }
-    // Cache local de lecturas: permite ver cortes sin conexion (solo lectura).
-    // Las escrituras de cortes van por transaccion, que nunca se encola offline.
-    // Sin synchronizeTabs: con varias pestanas, las escrituras de una secundaria
-    // quedaban esperando a la principal (la subida del modelo se colgaba). Asi
-    // solo la primera pestana usa cache persistente; las demas van en memoria.
-    db.enablePersistence().catch(() => {});
+    // Sin enablePersistence: con los trozos del modelo (900 KB) en la cache
+    // persistente cada escritura tardaba ~16 s, y con varias pestanas la subida
+    // se colgaba. La copia local del modelo la lleva CacheModelo (IndexedDB
+    // propia); los cortes van en memoria y, si se cae la red, siguen visibles
+    // en solo lectura. Las transacciones de cortes nunca se encolan offline.
     window.addEventListener('online', () => { online = true; });
     window.addEventListener('offline', () => { online = false; });
     online = navigator.onLine;
@@ -139,9 +138,20 @@
     });
   }
 
+  async function listarAccesos() {
+    const q = await db.collection('accesos').get();
+    return q.docs.map(d => ({ correo: d.id, ...d.data() })).sort((a, b) => a.correo.localeCompare(b.correo));
+  }
+  function guardarAcceso(correo, { rol, nombre, activo }) {
+    return db.doc('accesos/' + correo.trim().toLowerCase()).set({
+      rol, nombre: (nombre || '').trim(), activo: !!activo,
+      creadoPor: correoDe(usuario()), fecha: new Date().toISOString() }, { merge: true });
+  }
+
   window.Nube = { iniciar, usuario, alCambiarSesion, entrar, crearCuenta, reenviarVerificacion,
     recuperarClave, salir, miAcceso, listarObras, crearObra, escucharObra, leerVersion,
     descargarTrozos, subirVersion, traducirError, correoDe, enLinea: () => online,
     escucharCortes, registrarCorte, cambiarEstado,
+    listarAccesos, guardarAcceso,
     _db: () => db };
 })();
