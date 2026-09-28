@@ -113,12 +113,13 @@ la pieza no lo toque. Solo vale la pena afinarlo si estorba de verdad en el uso 
 
 ### Septiembre 2026
 
-- **Versión en la nube (piloto), 28 sep 2026** — en la rama `nube-piloto`: entrada con
+- **Versión en la nube (piloto), 28 sep 2026** — publicada en
+  https://cpulgariningeurbe.github.io/EURBEV1/ con el proyecto Firebase `eurbe-piloto`: entrada con
   correo, varias obras, modelo cargado una sola vez (el federado pesa 1,89 MB
   comprimido), cortes compartidos en vivo con permisos por rol, anular en vez de borrar,
   gestión de accesos, importación de cortes locales, modo sin conexión. **Pendiente:**
-  crear el proyecto Firebase real, publicar reglas y verificar desde la red de la
-  oficina (tarea 13 del plan).
+  primera entrada del administrador, subir el modelo federado, importar los cortes de
+  Viviana y probar desde la red de la oficina.
 - **Correcciones previas** — filtro «Ejecutados (IFC)» eliminado (dejaba la vista
   vacía), CSV de pendientes con columnas reales y edificación, dos decimales en
   pendientes, arrastrar un JSON ya pasa por el mapeo, notas escapadas.
