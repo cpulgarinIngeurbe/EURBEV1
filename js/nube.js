@@ -93,6 +93,8 @@
     if (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found')
       return 'Correo o contraseña incorrectos.';
     if (c === 'auth/email-already-in-use') return 'Ese correo ya tiene cuenta. Usa «Entrar» o «Olvidé mi contraseña».';
+    if (c === 'auth/invalid-email') return 'Eso no parece un correo: revisa que tenga @ y no tenga espacios.';
+    if (c === 'auth/missing-password') return 'Escribe tu contraseña.';
     if (c === 'auth/weak-password') return 'La contraseña debe tener al menos 6 caracteres.';
     if (c === 'auth/too-many-requests') return 'Demasiados intentos. Espera unos minutos.';
     return 'Error: ' + ((e && e.message) || e);

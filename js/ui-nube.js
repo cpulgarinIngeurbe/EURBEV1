@@ -28,11 +28,26 @@
       <p style="margin-top:10px"><button class="enlace" id="n-olvido">Olvidé mi contraseña</button></p>
       <div class="error" id="n-error">${esc(msg || '')}</div>
       <p class="nota">Inicio con cuenta Microsoft: próximamente.</p>`);
-    const leer = () => [$('n-correo').value, $('n-clave').value];
+    const leer = () => [$('n-correo').value.trim(), $('n-clave').value];
+    // Se revisa antes de llamar a Firebase: sus mensajes llegan en ingles
+    const revisar = (nueva) => {
+      const [c, k] = leer();
+      if (!c) return 'Escribe tu correo.';
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)) return 'Eso no parece un correo: revisa que tenga @ y no tenga espacios.';
+      if (!k) return 'Escribe tu contraseña.';
+      if (nueva && k.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+      return '';
+    };
+    const conRevision = (nueva, accion) => () => {
+      const m = revisar(nueva);
+      if (m) { $('n-error').textContent = m; return; }
+      $('n-error').textContent = '';
+      accion(...leer()).catch(fallo);
+    };
     const fallo = e => { $('n-error').textContent = Nube.traducirError(e); };
-    $('n-entrar').onclick = () => Nube.entrar(...leer()).catch(fallo);
+    $('n-entrar').onclick = conRevision(false, Nube.entrar);
     $('n-clave').onkeydown = e => { if (e.key === 'Enter') $('n-entrar').click(); };
-    $('n-crear').onclick = () => Nube.crearCuenta(...leer()).catch(fallo);
+    $('n-crear').onclick = conRevision(true, Nube.crearCuenta);
     $('n-olvido').onclick = () => {
       const c = $('n-correo').value;
       if (!c) { $('n-error').textContent = 'Escribe primero tu correo.'; return; }
