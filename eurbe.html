@@ -893,6 +893,8 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       </div>
     </div>
     <div style="margin-top:20px;text-align:right">
+      <button class="btn btn-secondary" onclick="exportarCortesJSON()"
+              title="Para pasar los cortes a la versión en la nube">💾 Exportar cortes (JSON)</button>
       <button class="btn btn-secondary" onclick="closeExportModal()">Cerrar</button>
     </div>
   </div>
@@ -2914,6 +2916,22 @@ async function exportExcel() {
   XLSX.writeFile(wb, `E-Urbe_Cortes_${date}.xlsx`);
   closeExportModal();
   notify('✅ Excel generado correctamente');
+}
+
+// Copia de seguridad de los cortes, y paso de la version local a la nube:
+// la version web no puede leer el localStorage de file://.
+function exportarCortesJSON() {
+  if (!STATE.cuts.length) { alert('No hay cortes registrados para exportar.'); return; }
+  const hoy = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify({
+    formato: 'eurbe-cortes', version: 1, exportado: new Date().toISOString(), cortes: STATE.cuts,
+  }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'eurbe_cortes_' + hoy + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  notify('✔ ' + STATE.cuts.length + ' cortes exportados');
 }
 
 function exportPendientesCSV() {
