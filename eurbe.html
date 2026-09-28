@@ -646,7 +646,6 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     <select id="f-estado" onchange="applyFilters()">
       <option value="all">Todos</option>
       <option value="pending">Pendientes</option>
-      <option value="executed">Ejecutados (IFC)</option>
       <option value="cut">En cortes E-Urbe</option>
     </select>
     <div class="filter-sep"></div>
@@ -908,6 +907,13 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 // ═══════════════════════════════════════════════
 //  E-URBE · CORE APPLICATION
 // ═══════════════════════════════════════════════
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
 
 const COLORS = {
   pending:    0xd0d0d8,
@@ -1486,7 +1492,10 @@ async function loadIFCDirect(arrayBuffer, filename) {
 // ── DATA LOADING (JSON) ────────────────────────
 document.getElementById('file-input').addEventListener('change', e => {
   const file = e.target.files[0];
-  if (!file) return;
+  if (file) leerArchivoJSON(file);
+});
+
+function leerArchivoJSON(file) {
   const reader = new FileReader();
   reader.onprogress = ev => {
     if (ev.lengthComputable) {
@@ -1524,7 +1533,7 @@ document.getElementById('file-input').addEventListener('change', e => {
     }
   };
   reader.readAsText(file);
-});
+}
 
 function loadModel(data) {
   STATE.elements = data.elements || [];
@@ -2195,7 +2204,7 @@ function renderHistory() {
         <div class="prop-row"><div class="prop-label">Grupo</div><div class="prop-value">${cut.descGrupo || '—'}</div></div>
         <div class="prop-row"><div class="prop-label">Nivel</div><div class="prop-value">${cut.nivel || '—'}</div></div>
         <div class="prop-row"><div class="prop-label">Cantidad total</div><div class="prop-value accent">${qtyStr}</div></div>
-        ${cut.notes ? `<div class="prop-row"><div class="prop-label">Observaciones</div><div class="prop-value">${cut.notes}</div></div>` : ''}
+        ${cut.notes ? `<div class="prop-row"><div class="prop-label">Observaciones</div><div class="prop-value">${esc(cut.notes)}</div></div>` : ''}
         <div class="cut-actions">
           <button class="btn btn-secondary btn-sm" onclick="highlightCut('${cut.id}')">👁 Ver en modelo</button>
           <button class="btn btn-danger btn-sm" onclick="deleteCut('${cut.id}')">🗑 Eliminar</button>
@@ -2338,8 +2347,7 @@ function applyFilters() {
     if (grupo && el.descGrupo !== grupo) show = false;
     if (actividad && el.actividad !== actividad) show = false;
     if (edificacion && el.edificacion !== edificacion) show = false;
-    if (estado === 'pending' && (el.ejecutado || STATE.cutElements.has(el.globalId))) show = false;
-    if (estado === 'executed' && !el.ejecutado) show = false;
+    if (estado === 'pending' && STATE.cutElements.has(el.globalId)) show = false;
     if (estado === 'cut' && !STATE.cutElements.has(el.globalId)) show = false;
 
     mesh.visible = show;
@@ -2468,17 +2476,8 @@ const dropArea = document.querySelector('.file-drop');
 dropArea.addEventListener('drop', e => {
   e.preventDefault();
   const file = e.dataTransfer.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      document.getElementById('load-progress').style.display = 'block';
-      setTimeout(() => {
-        const data = JSON.parse(ev.target.result);
-        loadModel(data);
-      }, 50);
-    };
-    reader.readAsText(file);
-  }
+  if (file && /\.json$/i.test(file.name)) leerArchivoJSON(file);
+  else if (file) alert('Arrastra un archivo .json. Para .ifc usa el botón de carga IFC.');
 });
 
 
@@ -2742,9 +2741,9 @@ function renderPendientes() {
       </td>
       ${colEdif ? `<td style="color:var(--c-blue);font-weight:600;font-size:10px">${r.edificacion || '—'}</td>` : ''}
       <td style="color:var(--c-text2)">${r.nivel || '—'}</td>
-      <td>${r.totalQty} <span class="chip-unit">${r.unidad}</span></td>
-      <td class="qty-done">${r.ejecutadoQty}</td>
-      <td class="${pendCls}">${r.pendiente}</td>
+      <td>${r.totalQty.toFixed(2)} <span class="chip-unit">${esc(r.unidad)}</span></td>
+      <td class="qty-done">${r.ejecutadoQty.toFixed(2)}</td>
+      <td class="${pendCls}">${r.pendiente.toFixed(2)}</td>
     </tr>`;
   }).join('');
 }
@@ -2891,7 +2890,7 @@ async function exportExcel() {
                      'Total modelo','Ejecutado','Pendiente','% Avance']];
   buildPendientesData('','','').forEach(r => {
     pendRows.push([r.edificacion || '', r.actividad, r.nivel, r.descGrupo, r.unidad,
-      r.totalQty, r.ejecutadoQty, r.pendiente, r.pctDone.toFixed(1)+'%']);
+      +r.totalQty.toFixed(2), +r.ejecutadoQty.toFixed(2), +r.pendiente.toFixed(2), r.pctDone.toFixed(1)+'%']);
   });
   const ws4 = XLSX.utils.aoa_to_sheet(pendRows);
   ws4['!cols'] = [{wch:16},{wch:40},{wch:14},{wch:28},{wch:8},{wch:13},{wch:12},{wch:12},{wch:10}];
@@ -2918,12 +2917,13 @@ async function exportExcel() {
 }
 
 function exportPendientesCSV() {
-  const rows = buildPendientesData('','');
-  const csv = ['Actividad,Nivel,Grupo,Unidad,Total IFC,Ejecutado IFC,En cortes E-Urbe,Pendiente,% Avance'];
+  const rows = buildPendientesData('','','');
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  const csv = ['Edificación,Actividad,Nivel,Grupo,Unidad,Total modelo,Ejecutado (cortes),Pendiente,% Avance'];
   rows.forEach(r => {
     csv.push([
-      `"${r.actividad}"`,`"${r.nivel}"`,`"${r.descGrupo}"`,r.unidad,
-      r.totalQty, r.ejecutadoQty, r.corteQty, r.pendiente, r.pctDone.toFixed(1)+'%'
+      q(r.edificacion), q(r.actividad), q(r.nivel), q(r.descGrupo), q(r.unidad),
+      r.totalQty.toFixed(2), r.ejecutadoQty.toFixed(2), r.pendiente.toFixed(2), r.pctDone.toFixed(1)+'%'
     ].join(','));
   });
   const blob = new Blob([csv.join('\n')], {type:'text/csv;charset=utf-8;'});
@@ -3170,7 +3170,7 @@ async function exportPDF() {
       <td style="color:${inf.color};font-weight:600;white-space:nowrap">● ${inf.lbl}</td>
       <td>${cut.nivel || '—'}</td>
       <td>${cut.actividad || '—'}</td><td>${cut.totalElements}</td>
-      <td>${qtyStr}</td><td>${cut.notes || ''}</td>
+      <td>${qtyStr}</td><td>${esc(cut.notes)}</td>
     </tr>`;
   }).join('');
 
@@ -3216,7 +3216,7 @@ async function exportPDF() {
             <th>Nivel</th><td>${cut.nivel || '—'}</td></tr>
         <tr><th>Desc. Grupo</th><td>${cut.descGrupo || '—'}</td>
             <th>Elementos</th><td>${cut.totalElements}</td></tr>
-        <tr><th>Observaciones</th><td colspan="3">${cut.notes || '—'}</td></tr>
+        <tr><th>Observaciones</th><td colspan="3">${esc(cut.notes) || '—'}</td></tr>
       </tbody></table>
 
       <p class="sub-th">Cantidades por actividad</p>
@@ -3249,8 +3249,8 @@ async function exportPDF() {
   const pendHtml = pendRows.map(r => `<tr>
     ${colEdifP ? `<td class="edif">${r.edificacion || '—'}</td>` : ''}
     <td>${r.actividad}</td><td>${r.nivel}</td><td>${r.unidad}</td>
-    <td>${r.totalQty}</td><td>${r.ejecutadoQty+r.corteQty}</td>
-    <td style="color:#E05050;font-weight:bold">${r.pendiente}</td>
+    <td>${r.totalQty.toFixed(2)}</td><td>${r.ejecutadoQty.toFixed(2)}</td>
+    <td style="color:#E05050;font-weight:bold">${r.pendiente.toFixed(2)}</td>
     <td>${r.pctDone.toFixed(1)}%</td>
   </tr>`).join('');
 

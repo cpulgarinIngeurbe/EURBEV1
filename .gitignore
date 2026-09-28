@@ -3,6 +3,8 @@
 !package.json
 !firebase.json
 !firestore.indexes.json
+!package-lock.json
+!js/package.json
 *.ifc
 *.ifczip
 
@@ -20,3 +22,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+.tools/
+test-results/
+playwright-report/
+.superpowers/
