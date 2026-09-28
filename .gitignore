@@ -1,0 +1,22 @@
+# Modelos BIM del cliente: nunca al repositorio (es público)
+*.json
+!package.json
+!firebase.json
+!firestore.indexes.json
+*.ifc
+*.ifczip
+
+# Respaldos y versiones obsoletas
+eurbe_v2.html
+eurbe_backup_prev.html
+eurbe_*.html
+ifc_converter.py
+
+# Entorno local
+.claude/
+__pycache__/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
