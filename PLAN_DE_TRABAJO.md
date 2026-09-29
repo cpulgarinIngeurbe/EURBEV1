@@ -113,6 +113,9 @@ la pieza no lo toque. Solo vale la pena afinarlo si estorba de verdad en el uso 
 
 ### Septiembre 2026
 
+- **Entornos de trabajo, 29 sep 2026** — cada persona ve solo las obras de los entornos
+  que le asigna el administrador; una obra puede estar en varios entornos. Lo existente
+  pasó a «General». Detalle en `docs/diseno-entornos.md`.
 - **Versión en la nube (piloto), 28 sep 2026** — publicada en
   https://cpulgariningeurbe.github.io/EURBEV1/ con el proyecto Firebase `eurbe-piloto`: entrada con
   correo, varias obras, modelo cargado una sola vez (el federado pesa 1,89 MB

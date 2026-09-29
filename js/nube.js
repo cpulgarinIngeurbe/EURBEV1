@@ -39,15 +39,69 @@
     return s.exists ? s.data() : null;
   }
 
-  async function listarObras() {
-    const q = await db.collection('obras').orderBy('nombre').get();
-    return q.docs.map(d => ({ id: d.id, ...d.data() }));
+  // El admin ve todas; los demas consultan filtrando por sus entornos (las
+  // reglas exigen ese filtro). array-contains-any admite 30 valores por consulta.
+  async function listarObras(ses) {
+    const deDocs = q => q.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!ses || ses.rol === 'admin') return deDocs(await db.collection('obras').orderBy('nombre').get());
+    const ids = ses.entornos || [], vistas = new Map();
+    for (let i = 0; i < ids.length; i += 30) {
+      const q = await db.collection('obras').where('entornos', 'array-contains-any', ids.slice(i, i + 30)).get();
+      deDocs(q).forEach(o => vistas.set(o.id, o));
+    }
+    return [...vistas.values()];
   }
-  async function crearObra(nombre) {
+  async function crearObra(nombre, entornos) {
     const ref = db.collection('obras').doc();
-    await ref.set({ nombre: nombre.trim(), modeloVigente: null, contadorCortes: 0,
+    await ref.set({ nombre: nombre.trim(), entornos: entornos || [], modeloVigente: null, contadorCortes: 0,
                     creadaPor: correoDe(usuario()), fecha: new Date().toISOString() });
     return ref.id;
+  }
+
+  // ── Entornos ──
+  async function listarEntornos(ses) {
+    if (!ses || ses.rol === 'admin') {
+      const q = await db.collection('entornos').get();
+      return q.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    const out = [];
+    for (const id of ses.entornos || []) {
+      const s = await db.doc('entornos/' + id).get();
+      if (s.exists) out.push({ id, ...s.data() });
+    }
+    return out;
+  }
+  async function crearEntorno(nombre, id) {
+    const ref = id ? db.doc('entornos/' + id) : db.collection('entornos').doc();
+    await ref.set({ nombre: nombre.trim(), creadoPor: correoDe(usuario()), fecha: new Date().toISOString() });
+    return ref.id;
+  }
+  const renombrarEntorno = (id, nombre) => db.doc('entornos/' + id).update({ nombre: nombre.trim() });
+  // Marca/desmarca obras en un entorno sin tocar sus otros entornos
+  async function fijarObrasDeEntorno(entornoId, marcadas, obras) {
+    const FV = firebase.firestore.FieldValue, b = db.batch();
+    let n = 0;
+    for (const o of obras) {
+      const esta = (o.entornos || []).includes(entornoId), quiere = marcadas.has(o.id);
+      if (esta === quiere) continue;
+      b.update(db.doc('obras/' + o.id), { entornos: quiere ? FV.arrayUnion(entornoId) : FV.arrayRemove(entornoId) });
+      n++;
+    }
+    if (n) await b.commit();
+    return n;
+  }
+  // Primera vez tras la actualizacion: todo lo existente pasa a «General»
+  async function migrarEntornos() {
+    const ent = await listarEntornos(null);
+    if (ent.length) return false;
+    const [obras, accesos] = await Promise.all([listarObras(null), listarAccesos()]);
+    const plan = EurbeEntornos.planMigracion({ entornos: ent, obras, accesos });
+    await crearEntorno(EurbeEntornos.GENERAL.nombre, EurbeEntornos.GENERAL.id);
+    const b = db.batch();
+    plan.obras.forEach(id => b.update(db.doc('obras/' + id), { entornos: [EurbeEntornos.GENERAL.id] }));
+    plan.accesos.forEach(c => b.update(db.doc('accesos/' + c), { entornos: [EurbeEntornos.GENERAL.id] }));
+    if (plan.obras.length || plan.accesos.length) await b.commit();
+    return true;
   }
   function escucharObra(obraId, cb) {
     return db.doc('obras/' + obraId).onSnapshot(s => cb({ id: s.id, ...s.data() }));
@@ -160,10 +214,11 @@
     const q = await db.collection('accesos').get();
     return q.docs.map(d => ({ correo: d.id, ...d.data() })).sort((a, b) => a.correo.localeCompare(b.correo));
   }
-  function guardarAcceso(correo, { rol, nombre, activo }) {
-    return db.doc('accesos/' + correo.trim().toLowerCase()).set({
-      rol, nombre: (nombre || '').trim(), activo: !!activo,
-      creadoPor: correoDe(usuario()), fecha: new Date().toISOString() }, { merge: true });
+  function guardarAcceso(correo, { rol, nombre, activo, entornos }) {
+    const datos = { rol, nombre: (nombre || '').trim(), activo: !!activo,
+      creadoPor: correoDe(usuario()), fecha: new Date().toISOString() };
+    if (Array.isArray(entornos)) datos.entornos = entornos;
+    return db.doc('accesos/' + correo.trim().toLowerCase()).set(datos, { merge: true });
   }
 
   // El contador sube PRIMERO: si un lote falla a medias, los registros nuevos
@@ -189,5 +244,6 @@
     descargarTrozos, subirVersion, traducirError, correoDe, enLinea: () => online,
     escucharCortes, registrarCorte, cambiarEstado,
     listarAccesos, guardarAcceso, importarCortes,
+    listarEntornos, crearEntorno, renombrarEntorno, fijarObrasDeEntorno, migrarEntornos,
     _db: () => db };
 })();

@@ -207,6 +207,10 @@ Diseño: `docs/diseno-nube.md`. Plan: `docs/superpowers/plans/2026-09-28-eurbe-n
   `registrador` | `consulta`), `obras/{id}` (con `modeloVigente` y `contadorCortes`),
   `obras/{id}/modelos/{v}` + `trozos/{n}` (modelo gzip en trozos de 900 KB, huella
   SHA-256), `obras/{id}/cortes/n{numeroSec}`.
+- **Entornos** (`docs/diseno-entornos.md`): `entornos/{id}`, y listas `entornos` en
+  `obras` y `accesos`. Un no-admin solo ve obras que comparten un entorno con él (lo
+  imponen las reglas; el listado debe filtrar con `array-contains-any`). Los admin ven
+  todo. La migración a «General» la hace `Nube.migrarEntornos()` al entrar un admin.
 - **Auth**: correo y contraseña, correo verificado obligatorio. Microsoft queda para
   después (registro en Entra por TI).
 - **Cortes**: número asignado por transacción sobre `contadorCortes`. Nunca se borran:
@@ -224,7 +228,8 @@ Diseño: `docs/diseno-nube.md`. Plan: `docs/superpowers/plans/2026-09-28-eurbe-n
   persistente cada escritura tardaba ~16 s. La copia offline es la de `CacheModelo`.
 - **Módulos**: `texto.js` (`esc`), `cortes-logica.js` (espejo de las reglas, puro),
   `modelo-paquete.js` (puro), `cache-modelo.js`, `nube.js` (todo Firebase, sin DOM),
-  `cortes-nube.js`, `accesos-ui.js`, `importar-ui.js`, `sin-conexion.js`,
+  `cortes-nube.js`, `accesos-ui.js`, `entornos-logica.js` (puro), `entornos-ui.js`,
+  `importar-ui.js`, `sin-conexion.js`,
   `ui-nube.js` (arranque y pantallas).
 
 ### Pruebas

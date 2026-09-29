@@ -97,14 +97,28 @@
     catch (e) { falloDeCarga(e, pantallaEntrada); return; }
     if (!acc || !acc.activo) { pantallaSinAcceso(SESION.correo); return; }
     SESION.rol = acc.rol; SESION.nombre = acc.nombre || SESION.correo;
+    SESION.entornos = Array.isArray(acc.entornos) ? acc.entornos : [];
+    if (SESION.rol === 'admin') {
+      // Primera vez tras la actualizacion de entornos: todo pasa a «General»
+      try { await Nube.migrarEntornos(); } catch (e) { console.warn('migración de entornos', e); }
+    }
     elegirObra();
   }
 
   // ── Obra ──
   async function elegirObra() {
-    let obras;
-    try { obras = await Nube.listarObras(); }
+    let obras, entornos;
+    try { [obras, entornos] = await Promise.all([Nube.listarObras(SESION), Nube.listarEntornos(SESION)]); }
     catch (e) { falloDeCarga(e, pantallaEntrada); return; }
+    const esAdmin = SESION.rol === 'admin';
+    if (!esAdmin && !SESION.entornos.length) {
+      pantalla(`${LOGO()}<h2>Sin entornos</h2>
+        <p class="sub">Aún no tienes entornos asignados, pídelo al administrador.<br><small>${esc(SESION.correo)}</small></p>
+        <button class="btn btn-secondary" id="n-salir">Salir</button>`);
+      $('n-salir').onclick = () => Nube.salir();
+      return;
+    }
+    const grupos = EurbeEntornos.agruparObras(obras, entornos, esAdmin);
     const ultima = (() => { try { return localStorage.getItem('eurbe_ultima_obra'); } catch (e) { return null; } })();
     // La ultima obra abierta se reabre directo («Cambiar de obra» borra esa
     // preferencia). Con una sola obra tambien se salta, salvo el admin, que
@@ -112,13 +126,19 @@
     const pre = obras.find(o => o.id === ultima);
     if (pre) return abrirObra(pre);
     if (obras.length === 1 && SESION.rol !== 'admin') return abrirObra(obras[0]);
+    const conObras = grupos.filter(g => g.obras.length);
     pantalla(`${LOGO()}<h2>Elige la obra</h2>
       <p class="sub">${esc(SESION.nombre)} · ${esc(SESION.rol)}</p>
-      <div id="n-obras">${obras.length ? obras.map(o => `
-        <button class="btn btn-secondary obra-item" data-id="${esc(o.id)}">
+      <div id="n-obras">${conObras.length ? conObras.map(g => `
+        <div class="ent-titulo">${esc(g.entorno.nombre)}</div>
+        ${g.obras.map(o => `<button class="btn btn-secondary obra-item" data-id="${esc(o.id)}">
           ${o.id === ultima ? '★ ' : ''}${esc(o.nombre)}${o.modeloVigente ? '' : ' <small>(sin modelo)</small>'}
-        </button>`).join('') : '<p class="sub">Aún no hay obras.</p>'}</div>
-      ${SESION.rol === 'admin' ? `<label>Nueva obra</label><input id="n-nueva" placeholder="Ej: PZA Torres">
+        </button>`).join('')}`).join('') : '<p class="sub">Aún no hay obras.</p>'}</div>
+      ${esAdmin ? `<label>Nueva obra</label><input id="n-nueva" placeholder="Ej: PZA Torres">
+        <label>Entornos de la obra</label>
+        <div id="n-nueva-ent" class="ent-marcas">${entornos.length ? entornos.map(e => `
+          <label><input type="checkbox" data-ent="${esc(e.id)}"${entornos.length === 1 ? ' checked' : ''}> ${esc(e.nombre)}</label>`).join('')
+          : '<small>Crea entornos en Obra ▾ → Gestionar entornos.</small>'}</div>
         <div class="fila"><button class="btn btn-primary" id="n-crear-obra">Crear obra</button></div>` : ''}
       <p style="margin-top:12px"><button class="enlace" id="n-salir">Salir</button></p>
       <div class="error" id="n-error"></div>`);
@@ -129,7 +149,8 @@
     if ($('n-crear-obra')) $('n-crear-obra').onclick = async () => {
       const n = $('n-nueva').value.trim();
       if (!n) return;
-      try { await Nube.crearObra(n); elegirObra(); }
+      const ents = [...document.querySelectorAll('#n-nueva-ent input[data-ent]:checked')].map(x => x.dataset.ent);
+      try { await Nube.crearObra(n, ents); elegirObra(); }
       catch (e) { $('n-error').textContent = Nube.traducirError(e); }
     };
   }
@@ -274,6 +295,7 @@
       `<button data-op="${fn}">${txt}</button>`;
     m.innerHTML = op('⇄ Cambiar de obra', 'cambiar') +
       op('⬆ Subir nueva versión del modelo', 'subir', true) +
+      op('🗂 Gestionar entornos', 'entornos', true) +
       op('👥 Gestionar accesos', 'accesos', true) +
       op('📥 Importar cortes', 'importar', true) +
       op('⎋ Salir', 'salir');
@@ -283,6 +305,7 @@
       if (o === 'cambiar') { try { localStorage.removeItem('eurbe_ultima_obra'); } catch (e) {} location.reload(); }
       if (o === 'subir') iniciarSubida();
       if (o === 'accesos' && window.abrirAccesos) window.abrirAccesos();
+      if (o === 'entornos' && window.abrirEntornos) window.abrirEntornos();
       if (o === 'importar' && window.abrirImportacion) window.abrirImportacion();
       if (o === 'salir') Nube.salir().then(() => location.reload());
     };

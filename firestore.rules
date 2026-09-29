@@ -9,22 +9,37 @@ service cloud.firestore {
     function habilitado(){ return firmado() && exists(rutaAcc()) && acceso().activo == true; }
     function esAdmin()   { return habilitado() && acceso().rol == 'admin'; }
     function registra()  { return habilitado() && acceso().rol in ['admin', 'registrador']; }
+    // Entornos: el admin ve todo; los demas, las obras que comparten al menos
+    // un entorno con los suyos (obras sin entornos: solo el admin)
+    function misEntornos() { return acceso().get('entornos', []); }
+    function veObra(obra)  { return esAdmin() || (habilitado() && obra.get('entornos', []).hasAny(misEntornos())); }
+    function rutaObraDe(id) { return /databases/$(db)/documents/obras/$(id); }
+    function veObraId(id)  { return esAdmin() || (habilitado() && get(rutaObraDe(id)).data.get('entornos', []).hasAny(misEntornos())); }
+
+    match /entornos/{e} {
+      allow read: if esAdmin() || (habilitado() && e in misEntornos());
+      allow create, update: if esAdmin() && request.resource.data.nombre is string
+        && request.resource.data.nombre.size() > 0 && request.resource.data.nombre.size() <= 100;
+      allow delete: if false;
+    }
 
     match /accesos/{c} {
       allow read: if firmado() && (c == correo() || esAdmin());
       allow create, update: if esAdmin()
         && c == c.lower()
         && request.resource.data.rol in ['admin', 'registrador', 'consulta']
-        && request.resource.data.activo is bool;
+        && request.resource.data.activo is bool
+        && request.resource.data.get('entornos', []) is list;
       allow delete: if false;
     }
 
     match /obras/{obraId} {
-      allow read: if habilitado();
-      allow create: if esAdmin() && request.resource.data.contadorCortes == 0;
+      allow read: if veObra(resource.data);
+      allow create: if esAdmin() && request.resource.data.contadorCortes == 0
+        && request.resource.data.get('entornos', []) is list;
       // El registrador solo puede mover el contador de uno en uno (numeración)
-      allow update: if esAdmin()
-        || (registra()
+      allow update: if (esAdmin() && request.resource.data.get('entornos', []) is list)
+        || (registra() && veObra(resource.data)
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['contadorCortes'])
             && request.resource.data.contadorCortes == resource.data.contadorCortes + 1
             // ...y solo si en la misma operacion se crea ese corte (sin huecos)
@@ -32,11 +47,11 @@ service cloud.firestore {
       allow delete: if false;
 
       match /modelos/{versionId} {
-        allow read: if habilitado();
+        allow read: if veObraId(obraId);
         allow create: if esAdmin();
         allow update, delete: if false;
         match /trozos/{n} {
-          allow read: if habilitado();
+          allow read: if veObraId(obraId);
           allow create: if esAdmin();
           allow update, delete: if false;
         }
@@ -101,14 +116,15 @@ service cloud.firestore {
             && h[n].fecha is string;
         }
 
-        allow read: if habilitado();
-        allow create: if nuevo().keys().hasOnly(campos())
+        allow read: if veObraId(obraId);
+        allow create: if veObraId(obraId)
+          && nuevo().keys().hasOnly(campos())
           && corteId == 'n' + string(nuevo().numeroSec)
           && nuevo().creadoPor == correo()
           && nuevo().ultimoCambio == request.time
           && tipos()
           && (registroNormal() || importacion());
-        allow update: if habilitado()
+        allow update: if veObraId(obraId)
           && nuevo().diff(resource.data).affectedKeys()
                .hasOnly(['estado', 'historial', 'ultimoCambio', 'anuladoPor', 'motivoAnulacion'])
           && nuevo().ultimoCambio == request.time

@@ -4,11 +4,13 @@ import {
   initializeTestEnvironment, assertSucceeds, assertFails,
 } from '@firebase/rules-unit-testing';
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc, runTransaction, serverTimestamp,
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, runTransaction, serverTimestamp,
+  collection, query, where,
 } from 'firebase/firestore';
 
 const ADMIN = 'admin@ingeurbe.com', REG = 'reg@ingeurbe.com', REG2 = 'reg2@ingeurbe.com';
 const CONS = 'cons@ingeurbe.com', NADIE = 'nadie@ingeurbe.com', INACT = 'inact@ingeurbe.com';
+const OTRO = 'otro@ingeurbe.com';   // registrador de otro entorno (e2)
 let env;
 
 const ctx = (email, verificado = true) =>
@@ -60,13 +62,18 @@ beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async c => {
     const db = c.firestore();
-    const acc = (rol, activo = true) => ({ rol, nombre: rol, activo, creadoPor: ADMIN, fecha: '2026-09-28' });
+    const acc = (rol, activo = true, entornos = ['e1']) => ({ rol, nombre: rol, activo, entornos, creadoPor: ADMIN, fecha: '2026-09-28' });
     await setDoc(doc(db, 'accesos/' + ADMIN), acc('admin'));
     await setDoc(doc(db, 'accesos/' + REG), acc('registrador'));
     await setDoc(doc(db, 'accesos/' + REG2), acc('registrador'));
     await setDoc(doc(db, 'accesos/' + CONS), acc('consulta'));
     await setDoc(doc(db, 'accesos/' + INACT), acc('registrador', false));
-    await setDoc(doc(db, 'obras/o1'), { nombre: 'PZA', modeloVigente: 'v1', contadorCortes: 0, creadaPor: ADMIN, fecha: '2026-09-28' });
+    await setDoc(doc(db, 'accesos/' + OTRO), acc('registrador', true, ['e2']));
+    await setDoc(doc(db, 'entornos/e1'), { nombre: 'PZA', creadoPor: ADMIN, fecha: 'f' });
+    await setDoc(doc(db, 'entornos/e2'), { nombre: 'Calle 80', creadoPor: ADMIN, fecha: 'f' });
+    await setDoc(doc(db, 'obras/o1'), { nombre: 'PZA', entornos: ['e1'], modeloVigente: 'v1', contadorCortes: 0, creadaPor: ADMIN, fecha: '2026-09-28' });
+    await setDoc(doc(db, 'obras/o2'), { nombre: 'Calle 80', entornos: ['e2'], modeloVigente: 'v1', contadorCortes: 0, creadaPor: ADMIN, fecha: '2026-09-28' });
+    await setDoc(doc(db, 'obras/o3'), { nombre: 'Sin entorno', modeloVigente: 'v1', contadorCortes: 0, creadaPor: ADMIN, fecha: '2026-09-28' });
   });
 });
 
@@ -236,4 +243,69 @@ test('número de dos cifras y de tres cifras válidos', async () => {
 });
 test('resúmenes largos de una selección grande se aceptan', async () => {
   await assertSucceeds(registrarCon(ctx(REG), REG, () => ({ actividad: 'Actividad larga / '.repeat(600) })));
+});
+
+
+// ── Entornos ──
+test('registrador lee obra de su entorno y no la de otro', async () => {
+  await assertSucceeds(getDoc(doc(ctx(REG), 'obras/o1')));
+  await assertFails(getDoc(doc(ctx(REG), 'obras/o2')));
+  await assertFails(getDoc(doc(ctx(REG), 'obras/o3')));
+});
+test('admin lee todas las obras, incluida la que no tiene entorno', async () => {
+  await assertSucceeds(getDoc(doc(ctx(ADMIN), 'obras/o2')));
+  await assertSucceeds(getDoc(doc(ctx(ADMIN), 'obras/o3')));
+  await assertSucceeds(getDocs(collection(ctx(ADMIN), 'obras')));
+});
+test('registrador lista sus obras filtrando por sus entornos; sin filtro no', async () => {
+  const db = ctx(REG);
+  const q = await assertSucceeds(getDocs(query(collection(db, 'obras'), where('entornos', 'array-contains-any', ['e1']))));
+  if (q.docs.map(d => d.id).join() !== 'o1') throw new Error('obras ' + q.docs.map(d => d.id));
+  await assertFails(getDocs(collection(db, 'obras')));
+  await assertFails(getDocs(query(collection(db, 'obras'), where('entornos', 'array-contains-any', ['e2']))));
+});
+test('cortes y modelo de una obra ajena: ni leer ni registrar', async () => {
+  await assertFails(getDoc(doc(ctx(REG), 'obras/o2/modelos/v1')));
+  await assertFails(getDoc(doc(ctx(REG), 'obras/o2/modelos/v1/trozos/0')));
+  await assertFails(getDocs(collection(ctx(REG), 'obras/o2/cortes')));
+  const db = ctx(REG);
+  await assertFails(runTransaction(db, async tx => {
+    const obra = doc(db, 'obras/o2');
+    tx.update(obra, { contadorCortes: 1 });
+    tx.set(doc(db, 'obras/o2/cortes/n1'), corteBase(1, REG));
+  }));
+});
+test('el registrador del otro entorno sí registra en su obra', async () => {
+  const db = ctx(OTRO);
+  await assertSucceeds(runTransaction(db, async tx => {
+    const obra = doc(db, 'obras/o2');
+    const n = (await tx.get(obra)).data().contadorCortes + 1;
+    tx.update(obra, { contadorCortes: n });
+    tx.set(doc(db, 'obras/o2/cortes/n' + n), corteBase(n, OTRO));
+  }));
+});
+test('cambiar estado de un corte ajeno al entorno: denegado', async () => {
+  await env.withSecurityRulesDisabled(async c => { await setDoc(doc(c.firestore(), 'obras/o2/cortes/n1'), { ...corteBase(1, OTRO), ultimoCambio: 'x', historial: h0(OTRO) }); });
+  await assertFails(updateDoc(doc(ctx(REG), 'obras/o2/cortes/n1'), {
+    estado: 'aprobacion', ultimoCambio: serverTimestamp(), historial: [...h0(OTRO), { estado: 'aprobacion', por: REG, fecha: 'f' }] }));
+});
+test('entornos: cada uno lee los suyos; solo admin crea y renombra', async () => {
+  await assertSucceeds(getDoc(doc(ctx(REG), 'entornos/e1')));
+  await assertFails(getDoc(doc(ctx(REG), 'entornos/e2')));
+  await assertSucceeds(getDocs(collection(ctx(ADMIN), 'entornos')));
+  await assertFails(setDoc(doc(ctx(REG), 'entornos/e3'), { nombre: 'X', creadoPor: REG, fecha: 'f' }));
+  await assertSucceeds(setDoc(doc(ctx(ADMIN), 'entornos/e3'), { nombre: 'X', creadoPor: ADMIN, fecha: 'f' }));
+  await assertSucceeds(updateDoc(doc(ctx(ADMIN), 'entornos/e3'), { nombre: 'Y' }));
+  await assertFails(deleteDoc(doc(ctx(ADMIN), 'entornos/e3')));
+});
+test('admin asigna entornos a obras y personas; deben ser listas', async () => {
+  await assertSucceeds(updateDoc(doc(ctx(ADMIN), 'obras/o2'), { entornos: ['e1', 'e2'] }));
+  await assertSucceeds(getDoc(doc(ctx(REG), 'obras/o2')));
+  await assertFails(updateDoc(doc(ctx(ADMIN), 'obras/o2'), { entornos: 'e1' }));
+  await assertSucceeds(updateDoc(doc(ctx(ADMIN), 'accesos/' + REG), { entornos: ['e1', 'e2'] }));
+  await assertFails(updateDoc(doc(ctx(ADMIN), 'accesos/' + REG), { entornos: 'e1' }));
+});
+test('registrador no puede cambiar los entornos de una obra ni los suyos', async () => {
+  await assertFails(updateDoc(doc(ctx(REG), 'obras/o1'), { entornos: ['e1', 'e2'] }));
+  await assertFails(updateDoc(doc(ctx(REG), 'accesos/' + REG), { entornos: ['e1', 'e2'] }));
 });

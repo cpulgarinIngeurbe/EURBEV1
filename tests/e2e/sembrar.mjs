@@ -8,11 +8,13 @@ export async function soloCuenta(email) {
   await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/projects/${P}/accounts`,
     { method: 'POST', headers: H, body: JSON.stringify({ email, password: 'clave123', emailVerified: true }) });
 }
-export async function usuario(email, rol) {
+// Los no admin quedan en el entorno «general» (el que crea la migración)
+export async function usuario(email, rol, entornos = ['general']) {
   await soloCuenta(email);
+  const fields = { rol: { stringValue: rol }, nombre: { stringValue: rol }, activo: { booleanValue: true } };
+  if (rol !== 'admin') fields.entornos = { arrayValue: { values: entornos.map(e => ({ stringValue: e })) } };
   await fetch(`${FS}/v1/projects/${P}/databases/(default)/documents/accesos/${email}`, {
-    method: 'PATCH', headers: H, body: JSON.stringify({ fields: {
-      rol: { stringValue: rol }, nombre: { stringValue: rol }, activo: { booleanValue: true } } }) });
+    method: 'PATCH', headers: H, body: JSON.stringify({ fields }) });
 }
 // Registra los textos que pasan por la pantalla #nube-box (para saber si hubo descarga)
 export const espiaPantalla = () => {

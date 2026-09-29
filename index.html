@@ -519,6 +519,12 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .nube-box .error { color: #c0392b; margin-top: 10px; min-height: 1em; }
 .nube-box .nota { color: #99a; font-size: 11px; margin-top: 18px; text-align: center; }
 .nube-box .obra-item { display: block; width: 100%; text-align: left; margin: 6px 0; }
+.nube-box .ent-titulo { font-size: 11px; font-weight: 700; color: #3A7FC1; text-transform: uppercase;
+  letter-spacing: .04em; margin: 14px 0 2px; }
+.nube-box .ent-marcas { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin-top: 4px; }
+.nube-box .ent-marcas label { display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: 12px; color: inherit; }
+.nube-box .ent-marcas input, .nube-box td input[type=checkbox] { width: auto; }
+.nube-box { max-height: calc(100vh - 32px); overflow-y: auto; }
 .nube-cabecera { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; }
 .nube-cabecera .rol { color: #778; }
 .nube-menu { position: absolute; right: 12px; top: 52px; background: #fff; border: 1px solid #e0e2e8;
@@ -944,6 +950,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 <script src="js/cortes-logica.js"></script>
 <script src="js/modelo-paquete.js"></script>
 <script src="js/cache-modelo.js"></script>
+<script src="js/entornos-logica.js"></script>
 <script src="js/nube.js"></script>
 <script>
 // ═══════════════════════════════════════════════
@@ -3427,6 +3434,7 @@ async function exportPDF() {
 
 </script>
 <script src="js/cortes-nube.js"></script>
+<script src="js/entornos-ui.js"></script>
 <script src="js/accesos-ui.js"></script>
 <script src="js/importar-ui.js"></script>
 <script src="js/sin-conexion.js"></script>
