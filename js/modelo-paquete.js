@@ -35,18 +35,23 @@
              bytes: comprimido.length, bytesOriginales: crudo.length };
   }
 
-  async function desempaquetar(trozos, huellaEsperada) {
+  // Bytes del JSON original (verificando la huella): sirve para descargarlo
+  // como archivo sin volver a serializar un objeto de decenas de MB
+  async function bytesJSON(trozos, huellaEsperada) {
     const comprimido = unir(trozos);
     if (huellaEsperada && (await huellaDe(comprimido)) !== huellaEsperada) {
       const e = new Error('El modelo descargado no coincide con el publicado (descarga incompleta o dañada).');
       e.code = 'huella';
       throw e;
     }
-    const crudo = await pasarPor(comprimido, new DecompressionStream('gzip'));
-    return JSON.parse(new TextDecoder().decode(crudo));
+    return pasarPor(comprimido, new DecompressionStream('gzip'));
   }
 
-  const api = { TAM_TROZO, empaquetar, desempaquetar, huellaDe, unir };
+  async function desempaquetar(trozos, huellaEsperada) {
+    return JSON.parse(new TextDecoder().decode(await bytesJSON(trozos, huellaEsperada)));
+  }
+
+  const api = { TAM_TROZO, empaquetar, desempaquetar, bytesJSON, huellaDe, unir };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.EurbePaquete = api;
 })(typeof window !== 'undefined' ? window : globalThis);

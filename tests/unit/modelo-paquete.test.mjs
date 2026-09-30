@@ -34,3 +34,11 @@ test('trozo corrupto → error de huella, no un modelo a medias', async () => {
   malo[0][20] ^= 0xff;
   await assert.rejects(P.desempaquetar(malo, p.huella), e => e.code === 'huella');
 });
+
+test('bytesJSON devuelve el JSON original sin re-serializar, verificando la huella', async () => {
+  const m = modeloFalso(50);
+  const p = await P.empaquetar(m);
+  const bytes = await P.bytesJSON(p.trozos, p.huella);
+  assert.deepEqual(JSON.parse(new TextDecoder().decode(bytes)), m);
+  await assert.rejects(P.bytesJSON(p.trozos, '0'.repeat(64)), e => e.code === 'huella');
+});

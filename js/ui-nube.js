@@ -295,6 +295,7 @@
       `<button data-op="${fn}">${txt}</button>`;
     m.innerHTML = op('⇄ Cambiar de obra', 'cambiar') +
       op('⬆ Subir nueva versión del modelo', 'subir', true) +
+      op('⬇ Descargar modelo (JSON)', 'descargar', true) +
       op('🗂 Gestionar entornos', 'entornos', true) +
       op('👥 Gestionar accesos', 'accesos', true) +
       op('📥 Importar cortes', 'importar', true) +
@@ -304,6 +305,7 @@
       cerrarMenu();
       if (o === 'cambiar') { try { localStorage.removeItem('eurbe_ultima_obra'); } catch (e) {} location.reload(); }
       if (o === 'subir') iniciarSubida();
+      if (o === 'descargar') descargarModelo();
       if (o === 'accesos' && window.abrirAccesos) window.abrirAccesos();
       if (o === 'entornos' && window.abrirEntornos) window.abrirEntornos();
       if (o === 'importar' && window.abrirImportacion) window.abrirImportacion();
@@ -312,6 +314,29 @@
     document.body.appendChild(m);
     setTimeout(() => document.addEventListener('click', cerrarMenu, { once: true }), 0);
   }
+  // Copia de seguridad del modelo vigente tal como lo usa E-Urbe (ya mapeado,
+  // coordenadas Z-up). Sale de la copia local si existe; si no, de la nube.
+  // Se puede volver a subir con «Subir nueva versión del modelo».
+  async function descargarModelo() {
+    try {
+      notify('⏳ Preparando el modelo…');
+      const meta = await Nube.leerVersion(SESION.obraId, SESION.versionId);
+      const local = await CacheModelo.leer(SESION.obraId, meta.id, meta.huella);
+      const trozos = local ? [local] : await Nube.descargarTrozos(SESION.obraId, meta);
+      const bytes = await EurbePaquete.bytesJSON(trozos, meta.huella);
+      const limpio = s => String(s || '').replace(/[\\/:*?"<>|]+/g, '-').trim();
+      const nombre = `${limpio(SESION.obraNombre)} - modelo ${(meta.fecha || '').slice(0, 10)}.json`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/json' }));
+      a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      notify(`✔ Modelo descargado (${(bytes.length / 1048576).toFixed(2)} MB)`);
+    } catch (e) {
+      alert('No se pudo descargar el modelo.\n\n' + Nube.traducirError(e));
+    }
+  }
+
   function cerrarMenu() { const m = $('n-menu-lista'); if (m) m.remove(); }
 
   // ── Arranque ──

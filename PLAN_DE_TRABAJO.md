@@ -113,6 +113,9 @@ la pieza no lo toque. Solo vale la pena afinarlo si estorba de verdad en el uso 
 
 ### Septiembre 2026
 
+- **Descargar modelo (JSON), 30 sep 2026** — Obra ▾ → «⬇ Descargar modelo (JSON)»
+  (solo administradores): copia de la versión vigente tal como la usa E-Urbe; se puede
+  volver a subir como versión nueva.
 - **Entornos de trabajo, 29 sep 2026** — cada persona ve solo las obras de los entornos
   que le asigna el administrador; una obra puede estar en varios entornos. Lo existente
   pasó a «General». Detalle en `docs/diseno-entornos.md`.
