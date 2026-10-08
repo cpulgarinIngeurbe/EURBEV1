@@ -63,7 +63,8 @@ service cloud.firestore {
         function campos() {
           return ['numeroSec','number','date','notes','elementIds','totalElements','qtyByUnit',
                   'actividad','nivel','edificacion','descGrupo','registeredAt','estado','creadoPor',
-                  'modeloVersion','historial','ultimoCambio','importado','anuladoPor','motivoAnulacion'];
+                  'modeloVersion','historial','ultimoCambio','importado','anuladoPor','motivoAnulacion',
+                  'contrato'];
         }
 
         // Todo lo que se pinta en pantalla o en informes llega aqui con su tipo
@@ -77,6 +78,7 @@ service cloud.firestore {
             && texto('date', 30) && texto('notes', 2000) && texto('registeredAt', 40)
             && texto('actividad', 20000) && texto('nivel', 20000) && texto('descGrupo', 20000)
             && texto('edificacion', 20000) && texto('modeloVersion', 60)
+            && (!('contrato' in nuevo()) || texto('contrato', 20000))
             && nuevo().elementIds is list && nuevo().totalElements is int
             && nuevo().qtyByUnit is map && nuevo().historial is list
             && !('anuladoPor' in nuevo()) && !('motivoAnulacion' in nuevo());

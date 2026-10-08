@@ -17,7 +17,7 @@
     try { ult = JSON.parse(localStorage.getItem('eurbe_ultima_version') || 'null'); } catch (e) {}
     const copia = ult && await CacheModelo.leerCualquiera(ult.obraId);
     if (!copia) {
-      U.pantalla(`${U.LOGO()}<h2>E-Urbe</h2><p class="sub">${esc(mensaje)}</p>
+      U.pantalla(`${U.LOGO()}<h2>Bitácora BIM</h2><p class="sub">${esc(mensaje)}</p>
         <p class="sub">Este equipo no tiene una copia guardada del modelo.</p>`);
       return;
     }

@@ -17,7 +17,7 @@
   // ── Entrada ──
   function pantallaEntrada(msg) {
     pantalla(`${LOGO()}
-      <h2>E-Urbe · Cortes de obra</h2>
+      <h2>Bitácora BIM · Cortes de obra</h2>
       <p class="sub">Entra con tu correo de Ingeurbe.</p>
       <label>Correo</label><input id="n-correo" type="email" autocomplete="username">
       <label>Contraseña</label><input id="n-clave" type="password" autocomplete="current-password">
@@ -77,7 +77,7 @@
 
   function pantallaSinAcceso(correo) {
     pantalla(`${LOGO()}<h2>Sin acceso</h2>
-      <p class="sub">No tienes acceso a E-Urbe, pídelo al administrador.<br><small>${esc(correo)}</small></p>
+      <p class="sub">No tienes acceso a Bitácora BIM, pídelo al administrador.<br><small>${esc(correo)}</small></p>
       <button class="btn btn-secondary" id="n-salir">Salir</button>`);
     $('n-salir').onclick = () => Nube.salir();
   }
@@ -344,7 +344,7 @@
     try { Nube.iniciar(window.EURBE_FIREBASE_CONFIG); }
     catch (e) {
       if (window.modoSinConexion) return window.modoSinConexion(Nube.traducirError(e));
-      pantalla(`${LOGO()}<h2>E-Urbe</h2><p class="sub">${esc(Nube.traducirError(e))}</p>`);
+      pantalla(`${LOGO()}<h2>Bitácora BIM</h2><p class="sub">${esc(Nube.traducirError(e))}</p>`);
       return;
     }
     let conSesion = false;

@@ -42,6 +42,7 @@
         notes: document.getElementById('cut-notes-input').value.trim(),
         elementIds: ids, totalElements: ids.length, qtyByUnit,
         actividad: unir('actividad'), nivel: unir('nivel'), edificacion: unir('edificacion'),
+        contrato: unir('contrato'),
         descGrupo: unir('descGrupo'), registeredAt: new Date().toISOString(),
         modeloVersion: S().versionId,
       });

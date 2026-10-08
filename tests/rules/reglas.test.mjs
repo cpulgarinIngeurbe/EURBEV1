@@ -309,3 +309,11 @@ test('registrador no puede cambiar los entornos de una obra ni los suyos', async
   await assertFails(updateDoc(doc(ctx(REG), 'obras/o1'), { entornos: ['e1', 'e2'] }));
   await assertFails(updateDoc(doc(ctx(REG), 'accesos/' + REG), { entornos: ['e1', 'e2'] }));
 });
+
+// ── Contrato (Bitácora BIM V9) ──
+test('el corte puede llevar contrato como texto', async () => {
+  await assertSucceeds(registrarCon(ctx(REG), REG, () => ({ contrato: 'CT-045 Estructura' })));
+});
+test('contrato que no es texto se rechaza', async () => {
+  await assertFails(registrarCon(ctx(REG), REG, () => ({ contrato: 45 })));
+});

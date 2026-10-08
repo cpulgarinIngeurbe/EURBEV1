@@ -199,6 +199,24 @@ modelo distingue más de una. Lo mismo el filtro en el visor y en pendientes.
 
 ---
 
+## Bitácora BIM V9 (integrada el 8 oct 2026)
+
+La aplicación se llama ahora **Bitácora BIM** (título, logo, nombres de informes). V9 se
+desarrolló aparte sobre el `eurbe.html` original y se integró con fusión de tres vías
+(base = original, nuestra, V9) en `eurbe.html` e `index.html`. Añade:
+
+- **Módulo de contratos** (`setModulo('contratos'|'cortes')`, funciones `ct…`): el visor
+  `#viewer-wrap` se muda entre `#main` y `#ct-visor`; exporta con ExcelJS (`ensureLib`).
+- **Parámetros nuevos en el mapeo**: `tipo`, `contrato`, `altura` (y magnitudes); cada
+  elemento lleva además `extra` con todas sus propiedades aplanadas.
+- **Color por material** (`setColorMode('material')`), con `colorIFC` que entrega
+  `ifc_converter_v2.py` (color dominante) o `loadIFCDirect`.
+- **Filtros de selección múltiple** (`ms…`) y filtro por contrato.
+- **Seguimiento por fechas** (`seg…`, `#seg-fechas`): aparece con ≥ 2 fechas de corte.
+- Los cortes guardan `contrato`; en la nube las reglas lo admiten como texto opcional.
+
+La carpeta `BITACORA BIM V9/` y los `*.xlsx` (cálculo de inversión interno) no van a git.
+
 ## Versión en la nube
 
 Diseño: `docs/diseno-nube.md`. Plan: `docs/superpowers/plans/2026-09-28-eurbe-nube.md`.

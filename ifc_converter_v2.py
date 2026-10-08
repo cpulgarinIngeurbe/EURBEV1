@@ -2,8 +2,9 @@
 """
 E-Urbe - Convertidor IFC -> model.json  (v2)
 ────────────────────────────────────────────
-Extrae de un archivo .ifc los elementos constructivos con su geometria y
-TODAS las propiedades de los psets de usuario, aplanadas en cada elemento.
+Extrae de un archivo .ifc los elementos constructivos con su geometria, el
+color de materialidad y TODAS las propiedades de los psets de usuario,
+aplanadas en cada elemento.
 
 La pantalla de mapeo de E-Urbe lee esas propiedades y permite elegir cual
 corresponde a cada campo interno (nivel, actividad, desc. grupo, unidad...),
@@ -80,6 +81,39 @@ def extract_properties(element):
     return flat
 
 
+def color_dominante(geometry):
+    """Devuelve el color del material que cubre mas caras, como '#RRGGBB'.
+
+    ifcopenshell entrega `materials` (lista de estilos) y `material_ids`
+    (indice de material por cara). Si un elemento mezcla materiales se toma
+    el que mas caras ocupa, que es el que domina al verlo.
+
+    OJO: los objetos de material dejan de ser validos si se libera la forma
+    que los produjo. Hay que leerlos mientras la forma sigue viva, o el
+    interprete se cae con un fallo de segmento.
+    """
+    try:
+        mats = geometry.materials
+        if not mats:
+            return None
+        idx = 0
+        ids = getattr(geometry, 'material_ids', None)
+        if ids is not None and len(ids) and len(mats) > 1:
+            conteo = {}
+            for i in ids:
+                if i >= 0:
+                    conteo[i] = conteo.get(i, 0) + 1
+            if conteo:
+                idx = max(conteo, key=conteo.get)
+        m = mats[min(idx, len(mats) - 1)]
+        d = m.diffuse
+        rgb = (d.r(), d.g(), d.b()) if hasattr(d, 'r') else tuple(d)[:3]
+        return '#%02X%02X%02X' % tuple(
+            max(0, min(255, int(round(v * 255)))) for v in rgb)
+    except Exception:
+        return None
+
+
 def derive_quantity(ifc_type, props):
     """Deduce cantidad + unidad por defecto segun el tipo de elemento.
 
@@ -147,9 +181,9 @@ def convert(ifc_path, out_path):
 
     elem_by_id = {e.id(): e for e in elements}
 
-    # ── 2. Geometria + propiedades en una sola pasada, escribiendo ───────
-    #     directamente a disco para no acumular nada en memoria.
-    log("Extrayendo geometria y propiedades...")
+    # ── 2. Geometria, color y propiedades en una sola pasada ─────────────
+    #     Se escribe directamente a disco para no acumular nada en memoria.
+    log("Extrayendo geometria, color y propiedades...")
     t_geom = time.time()
     settings = geom.settings()
     settings.set('use-world-coords', True)
@@ -159,6 +193,7 @@ def convert(ifc_path, out_path):
 
     all_prop_names = set()
     written = 0
+    con_color = 0
     minx = miny = minz = float('inf')
     maxx = maxy = maxz = float('-inf')
 
@@ -178,6 +213,8 @@ def convert(ifc_path, out_path):
                                  for i in range(0, len(raw_v), 3)]
                         faces = [[raw_f[i], raw_f[i + 1], raw_f[i + 2]]
                                  for i in range(0, len(raw_f), 3)]
+                        # Se lee aqui, con la forma todavia viva
+                        color = color_dominante(shape.geometry)
 
                         for v in verts:
                             if v[0] < minx: minx = v[0]
@@ -199,6 +236,7 @@ def convert(ifc_path, out_path):
                             'name': getattr(element, 'Name', None) or '',
                             'cantidad': cantidad,
                             'unidad': unidad,
+                            'colorIFC': color,
                             # El avance real lo definen solo los cortes de E-Urbe
                             'ejecutado': False,
                             'enProceso': False,
@@ -210,6 +248,8 @@ def convert(ifc_path, out_path):
                         # Propiedades del IFC, planas, para la pantalla de mapeo
                         record.update(props)
 
+                        if color:
+                            con_color += 1
                         if written:
                             tmp.write(',')
                         tmp.write(json.dumps(record, ensure_ascii=False,
@@ -262,6 +302,7 @@ def convert(ifc_path, out_path):
     size_mb = os.path.getsize(out_path) / 1e6
     log(f"\nListo en {time.time() - t_start:.1f}s")
     log(f"  {written} elementos - {size_mb:.1f} MB")
+    log(f"  {con_color} de {written} elementos con color de materialidad")
     log(f"  bbox centro: {[round(c, 1) for c in bbox['center']]}")
     log(f"  {len(all_prop_names)} parametros disponibles para mapear:")
     log("  " + ', '.join(sorted(all_prop_names)))

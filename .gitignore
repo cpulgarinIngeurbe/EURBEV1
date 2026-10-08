@@ -26,3 +26,8 @@ desktop.ini
 test-results/
 playwright-report/
 .superpowers/
+
+# Carpetas de trabajo entregadas para integrar y documentos internos de costos
+BITACORA BIM V9/
+*.xlsx
+*.xls

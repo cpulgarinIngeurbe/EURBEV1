@@ -74,6 +74,7 @@
         elementIds: ct.elementIds || [], totalElements: ct.totalElements || (ct.elementIds || []).length,
         qtyByUnit: ct.qtyByUnit || {}, actividad: ct.actividad || '', nivel: ct.nivel || '',
         edificacion: ct.edificacion || '', descGrupo: ct.descGrupo || '',
+        contrato: String(ct.contrato || '').slice(0, 20000),
         registeredAt: ct.registeredAt || ahoraISO, estado, creadoPor: correo,
         modeloVersion: '', importado: true,
         historial: [{ estado, por: correo, fecha: ahoraISO, motivo: MOTIVO_IMPORTADO }],

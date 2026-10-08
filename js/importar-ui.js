@@ -8,7 +8,7 @@
       let datos;
       try { datos = JSON.parse(await f.text()); } catch (e) { alert('El archivo no es un JSON válido.'); return; }
       if (!datos || datos.formato !== 'eurbe-cortes' || !Array.isArray(datos.cortes)) {
-        alert('Este archivo no es una exportación de cortes de E-Urbe.'); return;
+        alert('Este archivo no es una exportación de cortes de Bitácora BIM (o E-Urbe).'); return;
       }
       const existentes = new Set(STATE.cuts.concat(STATE.cutsAnulados || []).map(c => c.numeroSec));
       const ids = new Set(STATE.elements.map(e => e.globalId));

@@ -111,6 +111,13 @@ la pieza no lo toque. Solo vale la pena afinarlo si estorba de verdad en el uso 
 
 ## Hecho
 
+### Octubre 2026
+
+- **Bitácora BIM V9 integrada, 8 oct 2026** — módulo de contratos, color por material,
+  filtros múltiples, seguimiento por fechas, parámetros Tipo/Contrato/Altura y la marca
+  Bitácora BIM, sobre la versión en la nube (sin perder entornos, permisos ni arreglos).
+  Respaldo previo: etiqueta `respaldo-2026-10-08-1610`.
+
 ### Septiembre 2026
 
 - **Descargar modelo (JSON), 30 sep 2026** — Obra ▾ → «⬇ Descargar modelo (JSON)»

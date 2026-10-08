@@ -66,7 +66,7 @@ test('flujo completo: obra, modelo una vez, registro simultáneo, notas seguras'
 
 test('cuenta sin acceso no entra', async ({ page }) => {
   await entrar(page, 'nadie@ingeurbe.com');
-  await expect(page.getByText('No tienes acceso a E-Urbe')).toBeVisible();
+  await expect(page.getByText('No tienes acceso a Bitácora BIM')).toBeVisible();
 });
 
 test('campos de un corte escritos a mano por un registrador no ejecutan código en el admin', async ({ browser }) => {
