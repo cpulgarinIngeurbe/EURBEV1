@@ -1320,8 +1320,6 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <!-- SheetJS: exportacion a Excel · Chart.js: graficos del tab Avance -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════
 //  E-URBE · CORE APPLICATION
@@ -2750,6 +2748,8 @@ function initScene() {
   renderer.setSize(w, h);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = false;
+  const _setSize = renderer.setSize.bind(renderer);
+  renderer.setSize = (...args) => { _setSize(...args); pedirRender(); };
   renderer.setClearColor(0x1a1e24);
 
   scene = new THREE.Scene();
@@ -2782,6 +2782,7 @@ function initScene() {
   controls.zoomSpeed = 1.0;
   controls.minDistance = 1;
   controls.maxDistance = 500;
+  controls.addEventListener('change', pedirRender);
 
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
@@ -2801,57 +2802,166 @@ function initScene() {
 
 // Mientras se capturan las vistas para el PDF se pausa el bucle de render,
 // porque controls.update() reposiciona la camara y arruinaria el encuadre.
+// Render bajo demanda: solo se dibuja si algo cambio (camara, colores,
+// visibilidad, tamano). En reposo el visor no gasta procesador ni bateria.
+// Red de seguridad: un redibujo por segundo por si algun cambio no aviso.
 let captureMode = false;
+const _ultimaCam = new THREE.Matrix4();
+let _ultimoRender = 0;
 
 function animate() {
   requestAnimationFrame(animate);
   if (captureMode) return;
-  controls.update();
-  renderer.render(scene, camera);
+  const movio = controls.update();
+  const ahora = performance.now();
+  const camCambio = !_ultimaCam.equals(camera.matrixWorld);
+  if (movio || camCambio || necesitaRender || ahora - _ultimoRender > 1000) {
+    renderer.render(scene, camera);
+    _ultimaCam.copy(camera.matrixWorld);
+    necesitaRender = false; _ultimoRender = ahora;
+  }
 }
 
-// ── BUILD MESHES ──────────────────────────────
+// ── MODELO UNIDO (rendimiento) ────────────────
+// Todos los elementos van en UNA geometria: la tarjeta grafica recibe un par de
+// envios por fotograma en lugar de uno por elemento (16.605 con el federado,
+// lo que hacia ir el giro a tirones en portatiles con grafica integrada).
+// STATE.meshes[gid] sigue existiendo como una «Pieza» con la misma forma de uso
+// que una malla de Three.js (visible, material.color.setHex/getHex,
+// material.opacity/transparent, geometry.boundingBox, userData…), asi que
+// filtros, colores, contratos y capturas no cambian.
+// Visibilidad y transparencia van en un atributo por vertice (aVis): 0 oculto,
+// 1 opaco, intermedio = transparente. Dos mallas comparten la geometria: una
+// dibuja lo opaco y otra lo transparente (sin escribir profundidad).
+const MODELO = { geo: null, opaco: null, transp: null, colores: null, vis: null, piezas: [] };
+let necesitaRender = true;
+function pedirRender() { necesitaRender = true; }
+
+function materialModelo(transparente) {
+  const m = new THREE.MeshPhongMaterial({
+    color: 0xffffff, vertexColors: true, specular: 0x222222, shininess: 15,
+    side: THREE.DoubleSide, transparent: transparente, depthWrite: !transparente,
+  });
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aVis;\nvarying float vVis;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvVis = aVis;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vVis;')
+      .replace('#include <color_fragment>', transparente
+        ? '#include <color_fragment>\nif (vVis < 0.001 || vVis > 0.999) discard;\ndiffuseColor.a *= vVis;'
+        : '#include <color_fragment>\nif (vVis < 0.999) discard;');
+  };
+  m.customProgramCacheKey = () => transparente ? 'modelo-transp' : 'modelo-opaco';
+  return m;
+}
+
+class Pieza {
+  constructor(i, gid, el, v0, nv, t0, nt, caja) {
+    this.i = i; this.v0 = v0; this.nv = nv; this.t0 = t0; this.nt = nt;
+    this.userData = { globalId: gid, element: el };
+    this.geometry = { boundingBox: caja, computeBoundingBox() {} };
+    this.matrixWorld = new THREE.Matrix4(); this.children = [];
+    this._vis = true; this._hex = -1; this._op = 1; this._tr = false;
+    const p = this;
+    this.material = {
+      color: { setHex(h) { p._color(h); return this; }, getHex() { return p._hex; } },
+      get opacity() { return p._op; }, set opacity(v) { p._op = v; p._alfa(); },
+      get transparent() { return p._tr; }, set transparent(v) { p._tr = !!v; p._alfa(); },
+    };
+  }
+  get visible() { return this._vis; }
+  set visible(v) { v = !!v; if (v === this._vis) return; this._vis = v; this._alfa(); }
+  updateWorldMatrix() {}
+  localToWorld(v) { return v; }
+  _color(h) {
+    if (h === this._hex) return;
+    this._hex = h;
+    const r = ((h >> 16) & 255) / 255, g = ((h >> 8) & 255) / 255, b = (h & 255) / 255, c = MODELO.colores;
+    for (let k = this.v0 * 3, fin = (this.v0 + this.nv) * 3; k < fin; k += 3) { c[k] = r; c[k + 1] = g; c[k + 2] = b; }
+    MODELO.geo.attributes.color.needsUpdate = true; pedirRender();
+  }
+  _alfa() {
+    const a = !this._vis ? 0 : (this._tr && this._op < 0.999 ? Math.max(0.002, this._op) : 1), v = MODELO.vis;
+    if (v[this.v0] === a) return;
+    v.fill(a, this.v0, this.v0 + this.nv);
+    MODELO.geo.attributes.aVis.needsUpdate = true; pedirRender();
+  }
+}
+
+// Clic: primero la caja de cada pieza visible, luego sus triangulos. Ignora lo
+// oculto (antes se descartaban las mallas invisibles) y es rapido con 16.604.
+function raycastModelo(ray) {
+  if (!MODELO.geo) return null;
+  const pos = MODELO.geo.attributes.position.array, idx = MODELO.geo.index.array;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), p = new THREE.Vector3();
+  let mejor = null, dist = Infinity;
+  for (const pz of MODELO.piezas) {
+    if (!pz._vis || !ray.intersectsBox(pz.geometry.boundingBox)) continue;
+    for (let t = pz.t0, fin = pz.t0 + pz.nt; t < fin; t++) {
+      a.fromArray(pos, idx[t * 3] * 3); b.fromArray(pos, idx[t * 3 + 1] * 3); c.fromArray(pos, idx[t * 3 + 2] * 3);
+      if (ray.intersectTriangle(a, b, c, false, p)) {
+        const d = ray.origin.distanceTo(p);
+        if (d < dist) { dist = d; mejor = pz; }
+      }
+    }
+  }
+  return mejor;
+}
+
 function buildMeshes() {
   const offset = STATE.modelOffset;
   STATE.meshes = {};
+  MODELO.piezas = [];
+  if (MODELO.opaco) { meshGroup.remove(MODELO.opaco); meshGroup.remove(MODELO.transp); MODELO.geo.dispose(); }
 
-  STATE.elements.forEach(el => {
-    if (!el.vertices || el.vertices.length === 0) return;
+  // 1) Tamano total
+  let nV = 0, nT = 0;
+  for (const el of STATE.elements) {
+    if (!el.vertices || !el.vertices.length) continue;
+    nV += el.vertices.length; nT += (el.faces || []).length;
+  }
+  const pos = new Float32Array(nV * 3), idx = new Uint32Array(nT * 3);
+  MODELO.colores = new Float32Array(nV * 3);
+  MODELO.vis = new Float32Array(nV).fill(1);
 
-    const geo = new THREE.BufferGeometry();
-    const verts = new Float32Array(el.vertices.length * 3);
-    for (let i = 0; i < el.vertices.length; i++) {
-      verts[i*3]   = el.vertices[i][0] - offset[0];
-      verts[i*3+1] = el.vertices[i][2] - offset[2]; // swap Y/Z for Three.js
-      verts[i*3+2] = -(el.vertices[i][1] - offset[1]);
+  // 2) Copia de cada elemento (Z-up del IFC → Y-up de Three.js, como antes)
+  const punto = new THREE.Vector3();
+  let v0 = 0, t0 = 0;
+  for (const el of STATE.elements) {
+    if (!el.vertices || !el.vertices.length) continue;
+    const nv = el.vertices.length, faces = el.faces || [], caja = new THREE.Box3();
+    for (let i = 0; i < nv; i++) {
+      const q = el.vertices[i], k = (v0 + i) * 3;
+      pos[k]     = q[0] - offset[0];
+      pos[k + 1] = q[2] - offset[2];
+      pos[k + 2] = -(q[1] - offset[1]);
+      caja.expandByPoint(punto.set(pos[k], pos[k + 1], pos[k + 2]));
     }
-    geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
-
-    const idxArr = new Uint32Array(el.faces.length * 3);
-    for (let i = 0; i < el.faces.length; i++) {
-      idxArr[i*3]   = el.faces[i][0];
-      idxArr[i*3+1] = el.faces[i][1];
-      idxArr[i*3+2] = el.faces[i][2];
+    for (let i = 0; i < faces.length; i++) {
+      const k = (t0 + i) * 3;
+      idx[k] = faces[i][0] + v0; idx[k + 1] = faces[i][1] + v0; idx[k + 2] = faces[i][2] + v0;
     }
-    geo.setIndex(new THREE.BufferAttribute(idxArr, 1));
-    geo.computeVertexNormals();
+    const pz = new Pieza(MODELO.piezas.length, el.globalId, el, v0, nv, t0, faces.length, caja);
+    MODELO.piezas.push(pz);
+    STATE.meshes[el.globalId] = pz;
+    v0 += nv; t0 += faces.length;
+  }
 
-    const color = COLORS.pending;
-    const mat = new THREE.MeshPhongMaterial({
-      color: color,
-      specular: 0x222222,
-      shininess: 15,
-      transparent: false,
-      opacity: 1.0,
-      side: THREE.DoubleSide,
-    });
-
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.userData.globalId = el.globalId;
-    mesh.userData.element = el;
-    meshGroup.add(mesh);
-    STATE.meshes[el.globalId] = mesh;
-  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(MODELO.colores, 3));
+  geo.setAttribute('aVis', new THREE.BufferAttribute(MODELO.vis, 1));
+  geo.setIndex(new THREE.BufferAttribute(idx, 1));
+  geo.computeVertexNormals();
+  geo.computeBoundingBox(); geo.computeBoundingSphere();
+  MODELO.geo = geo;
+  MODELO.opaco = new THREE.Mesh(geo, materialModelo(false));
+  MODELO.transp = new THREE.Mesh(geo, materialModelo(true));
+  MODELO.transp.renderOrder = 1;
+  meshGroup.add(MODELO.opaco); meshGroup.add(MODELO.transp);
+  MODELO.piezas.forEach(pz => pz.material.color.setHex(COLORS.pending));
+  pedirRender();
 
   // Fit camera to model
   const box = new THREE.Box3().setFromObject(meshGroup);
@@ -3078,16 +3188,14 @@ function handleClick(e) {
   mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-  const visibleMeshes = Object.values(STATE.meshes).filter(m => m.visible);
-  const hits = raycaster.intersectObjects(visibleMeshes);
+  const pieza = raycastModelo(raycaster.ray);
 
-  if (hits.length === 0) {
+  if (!pieza) {
     if (!e.shiftKey) clearSelection();
     return;
   }
 
-  const mesh = hits[0].object;
-  const gid = mesh.userData.globalId;
+  const gid = pieza.userData.globalId;
 
   if (e.shiftKey) {
     // Toggle selection
