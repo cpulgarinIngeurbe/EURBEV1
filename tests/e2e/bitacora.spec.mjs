@@ -36,7 +36,7 @@ test('V9 en la nube: módulo de contratos, color por material, contrato en el co
 
   // Excel con la columna Contrato además de Registrado por
   const cab = await a.evaluate(async () => {
-    let wb; const o = XLSX.writeFile; XLSX.writeFile = w => { wb = w; };
+    await ensureLib('XLSX'); let wb; const o = XLSX.writeFile; XLSX.writeFile = w => { wb = w; };
     await exportExcel(); XLSX.writeFile = o;
     return XLSX.utils.sheet_to_json(wb.Sheets['Historial Cortes'], { header: 1 })[0];
   });

@@ -26,6 +26,30 @@ test('visor rápido: pocos envíos a la GPU, clic/ventana/filtros/colores y capt
   const llamadas = await a.evaluate(() => renderer.info.render.calls);
   expect(llamadas).toBeLessThanOrEqual(4);
 
+  // Equipos sin tarjeta gráfica: dibujo ligero
+  const ligero = await a.evaluate(() => ({
+    transp: MODELO.transp.visible, lambert: MODELO.opaco.material.type, niebla: scene.fog,
+    software: VISOR.software, aa: renderer.getContext().getContextAttributes().antialias }));
+  expect(ligero.transp).toBe(false);                 // sin transparencias no hay segunda pasada
+  expect(ligero.lambert).toBe('MeshLambertMaterial');
+  expect(ligero.niebla).toBeNull();
+  if (ligero.software) expect(ligero.aa).toBe(false); // por software, sin suavizado de bordes
+  // Una pieza transparente activa la pasada; al quitarla se apaga
+  await a.evaluate(() => { const m = Object.values(STATE.meshes)[0]; m.material.transparent = true; m.material.opacity = 0.3; });
+  expect(await a.evaluate(() => MODELO.transp.visible)).toBe(true);
+  await a.evaluate(() => { const m = Object.values(STATE.meshes)[0]; m.material.opacity = 1; m.material.transparent = false; });
+  expect(await a.evaluate(() => MODELO.transp.visible)).toBe(false);
+  // Resolución adaptativa: si el giro va lento baja la resolución y al soltar vuelve
+  const res = await a.evaluate(async () => {
+    const base = renderer.getPixelRatio();
+    VISOR.registrarFotograma(120); VISOR.registrarFotograma(120); VISOR.registrarFotograma(120);   // fotogramas lentos girando
+    const bajando = renderer.getPixelRatio();
+    VISOR.soltar(); await new Promise(r => setTimeout(r, 450));
+    return { base, bajando, final: renderer.getPixelRatio() };
+  });
+  expect(res.bajando).toBeLessThan(res.base);
+  expect(res.final).toBe(res.base);
+
   // En reposo casi no redibuja
   const f0 = await a.evaluate(() => renderer.info.render.frame);
   await a.waitForTimeout(2500);

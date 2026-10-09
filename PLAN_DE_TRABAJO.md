@@ -113,6 +113,11 @@ la pieza no lo toque. Solo vale la pena afinarlo si estorba de verdad en el uso 
 
 ### Octubre 2026
 
+- **Visor más rápido, también sin tarjeta gráfica, 9 oct 2026** — geometría unida,
+  dibujo bajo demanda, iluminación ligera, sin antialias por software, resolución
+  adaptativa al girar y librerías de Excel/gráficos solo al usarse. Por software:
+  de ~1 imagen por segundo a ~8 en reposo y ~13-16 girando. Respaldo previo:
+  `respaldo-2026-10-09-1516`.
 - **Bitácora BIM V9 integrada, 8 oct 2026** — módulo de contratos, color por material,
   filtros múltiples, seguimiento por fechas, parámetros Tipo/Contrato/Altura y la marca
   Bitácora BIM, sobre la versión en la nube (sin perder entornos, permisos ni arreglos).

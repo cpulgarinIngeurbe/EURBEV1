@@ -132,6 +132,34 @@ estado a medias que hace girar la cámara sola después. Por eso el marquee escu
 **fase de captura sobre `document`**, se adelanta y desactiva `controls.enabled` antes de
 que OrbitControls vea el evento.
 
+### Rendimiento del visor (9 oct 2026) — no volver a una malla por elemento
+
+Medido con el federado y dibujo por software (equipo sin tarjeta gráfica):
+976 ms por imagen antes → ~120 ms en reposo y ~60-75 ms girando.
+
+- **Geometría unida** (`buildMeshes`): todos los elementos en UNA `BufferGeometry`
+  (`MODELO.geo`) con color por vértice y atributo `aVis` (0 oculto, 1 opaco,
+  intermedio = transparente). `STATE.meshes[gid]` es una `Pieza` que imita la API de
+  una malla (`visible`, `material.color.setHex/getHex`, `material.opacity`,
+  `material.transparent`, `geometry.boundingBox`, `userData`): el resto del código no
+  sabe que no hay mallas reales. Antes eran 16.605 envíos a la GPU por fotograma.
+- **Clic**: `raycastModelo(ray)` prueba la caja de cada pieza visible y luego sus
+  triángulos. No usar `raycaster.intersectObjects` sobre piezas.
+- **Dos pasadas**: `MODELO.opaco` y `MODELO.transp` comparten geometría; la
+  transparente solo está activa si alguna pieza es transparente (`MODELO.nTransp`),
+  en la práctica solo en las capturas del PDF. Lo que no toca dibujar se saca de la
+  pantalla en el vértice, sin `discard`.
+- **Lambert** (luz por vértice) y **sin niebla**: por software la luz por píxel
+  cuadruplicaba el tiempo.
+- **`VISOR`**: detecta dibujo por software (SwiftShader, llvmpipe, Basic Render) y
+  entonces crea el renderer **sin antialias**. Resolución adaptativa: tres fotogramas
+  lentos girando bajan la resolución (×0,4 software, ×0,5 GPU) y al soltar vuelve.
+- **Render bajo demanda** (`animate`): solo dibuja si se movió la cámara, si una
+  pieza llamó a `pedirRender()` o cambió el tamaño; más un redibujo por segundo de
+  seguridad. Cualquier cambio visual nuevo debe llamar a `pedirRender()`.
+- **XLSX y Chart.js ya no van como `<script>`**: se cargan con `ensureLib()` al
+  exportar o al abrir Avance. Todo uso nuevo debe pasar por `ensureLib`.
+
 ### Capturas 3D para el PDF
 
 El renderer se crea con `preserveDrawingBuffer: true`; sin eso `toDataURL()` sale en
