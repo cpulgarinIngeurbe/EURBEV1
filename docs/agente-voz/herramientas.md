@@ -5,6 +5,9 @@ Crear cada una en **Agent → Tools → Add tool → Client tool**, con:
 - **Name**: exactamente el nombre indicado (la página las busca por ese nombre).
 - **Description**: el texto indicado.
 - **Wait for response**: activado (el agente debe esperar el texto que devuelve la página).
+- **Response timeout**: 15 segundos (con 1 s, el valor por defecto, la respuesta no alcanza a llegar).
+- Después de crear o cambiar herramientas, **Publicar** el agente: el widget usa la versión publicada, no el borrador.
+- `docs/agente-voz/prompt.md` es solo el texto del prompt: se pega completo en **System prompt**. First message: «Hola, soy el asistente de E-Urbe. ¿Qué quieres ver del modelo?»
 - **Parameters**: los indicados. Ninguno es obligatorio salvo que diga «requerido».
 
 La página las atiende en `js/agente-voz.js`. Todas devuelven un texto para leer.
