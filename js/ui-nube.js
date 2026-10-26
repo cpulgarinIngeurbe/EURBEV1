@@ -3,7 +3,7 @@
 // showMappingScreen…) y los modulos Nube, CacheModelo, EurbePaquete, EurbeCortes.
 (function () {
   const SESION = window.SESION = {
-    correo: '', rol: '', nombre: '', obraId: '', obraNombre: '',
+    correo: '', rol: '', nombre: '', obraId: '', obraNombre: '', obraEntornos: [],
     versionId: '', obraVersionCargada: '', soloLectura: false, subiendo: false,
   };
   const $ = id => document.getElementById(id);
@@ -163,6 +163,7 @@
 
   async function abrirObra(obra) {
     SESION.obraId = obra.id; SESION.obraNombre = obra.nombre;
+    SESION.obraEntornos = Array.isArray(obra.entornos) ? obra.entornos : [];
     if (!obra.modeloVigente) {
       if (SESION.rol === 'admin') { recordarObra(obra.id); iniciarSubida(); return; }
       olvidarObra();
@@ -278,6 +279,7 @@
   window.alModeloCargado = function () {
     pintarCabecera();
     if (window.alModeloCargadoCortes) window.alModeloCargadoCortes();
+    if (window.alModeloCargadoAgente) window.alModeloCargadoAgente();
   };
 
   // ── Cabecera: usuario y menu Obra ──

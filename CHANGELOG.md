@@ -4,6 +4,25 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-10-26 13:56 (hora Colombia)
+
+- Agente de voz (ElevenLabs), solo en `desarrollo`: `js/agente-voz.js` y
+  `js/agente-voz-logica.js`. Herramientas: `filtrar_elementos`, `limpiar_filtros`,
+  `seleccionar_visibles`, `limpiar_seleccion`, `consultar_avance`, `consultar_cortes`,
+  `registrar_corte`, `cambiar_estado_corte`.
+- Entiende «nivel 2», «piso dos», «segundo piso»; plurales; varios valores
+  («columnas y vigas»). Si hay duda, ofrece opciones numeradas y no cambia la vista.
+- Registrar un corte o cambiar su estado va en dos pasos (resumen y confirmación,
+  vigente 2 minutos) y solo en obras del entorno «Pruebas». Anular no va por voz.
+- `cortes-nube.js`: el registro de corte se separó en
+  `registrarSeleccionComoCorte()`, sin ventanas, para que lo use el agente. El botón
+  sigue igual.
+- `ui-nube.js`: guarda los entornos de la obra abierta (`SESION.obraEntornos`) y avisa
+  al agente al cargar el modelo.
+- Prompt y herramientas para crear el agente: `docs/agente-voz/`. Falta pegar el
+  `agent-id` en `AGENT_ID` de `js/agente-voz.js`; mientras esté vacío no aparece el
+  widget.
+
 ## 2026-10-26 13:06 (hora Colombia)
 
 - Se crea este registro de cambios.

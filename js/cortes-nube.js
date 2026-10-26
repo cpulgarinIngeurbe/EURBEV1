@@ -30,31 +30,42 @@
     if (dup.length && !confirm(dup.map(d => `${d.cuantos} elemento(s) ya están en el ${d.number}`).join('\n') +
         '\n\n¿Registrar igual?')) return;
 
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    try {
+      await window.registrarSeleccionComoCorte({
+        date: document.getElementById('cut-date-input').value,
+        notes: document.getElementById('cut-notes-input').value.trim(),
+      });
+      document.getElementById('cut-notes-input').value = '';
+      document.getElementById('cut-date-input').value = '';
+    } catch (e) {
+      alert('No se registró el corte.\n\n' + Nube.traducirError(e));
+    } finally { btn.disabled = false; }
+  };
+
+  // Registra la seleccion actual como corte, sin ventanas (lo usa tambien el
+  // agente de voz, que no puede quedar esperando un confirm/alert). Lanza el
+  // error de Firestore si el servidor lo rechaza.
+  window.registrarSeleccionComoCorte = async function ({ date = '', notes = '' } = {}) {
+    const ids = [...STATE.selected];
     const els = ids.map(g => STATE.elements.find(e => e.globalId === g)).filter(Boolean);
     const qtyByUnit = {};
     els.forEach(el => { if (el.cantidad != null) qtyByUnit[el.unidad] = (qtyByUnit[el.unidad] || 0) + el.cantidad; });
     const unir = k => [...new Set(els.map(e => e[k]))].filter(Boolean).join(' / ');
-    const btn = document.getElementById('btn-register');
-    btn.disabled = true;
-    try {
-      const r = await Nube.registrarCorte(S().obraId, {
-        date: document.getElementById('cut-date-input').value,
-        notes: document.getElementById('cut-notes-input').value.trim(),
-        elementIds: ids, totalElements: ids.length, qtyByUnit,
-        actividad: unir('actividad'), nivel: unir('nivel'), edificacion: unir('edificacion'),
-        contrato: unir('contrato'),
-        descGrupo: unir('descGrupo'), registeredAt: new Date().toISOString(),
-        modeloVersion: S().versionId,
-      });
-      STATE.selected.clear();
-      document.getElementById('cut-notes-input').value = '';
-      document.getElementById('cut-date-input').value = '';
-      updatePropsPanel();
-      notify(`✔ ${r.number} registrado — ${ids.length} elementos`);
-      setStatusBar(`${r.number} registrado correctamente.`);
-    } catch (e) {
-      alert('No se registró el corte.\n\n' + Nube.traducirError(e));
-    } finally { btn.disabled = false; }
+    const r = await Nube.registrarCorte(S().obraId, {
+      date, notes,
+      elementIds: ids, totalElements: ids.length, qtyByUnit,
+      actividad: unir('actividad'), nivel: unir('nivel'), edificacion: unir('edificacion'),
+      contrato: unir('contrato'),
+      descGrupo: unir('descGrupo'), registeredAt: new Date().toISOString(),
+      modeloVersion: S().versionId,
+    });
+    STATE.selected.clear();
+    updatePropsPanel();
+    notify(`✔ ${r.number} registrado — ${ids.length} elementos`);
+    setStatusBar(`${r.number} registrado correctamente.`);
+    return r;
   };
 
   window.cambiarEstadoCorte = async function (cutId, estado) {
