@@ -300,18 +300,26 @@
   }
 
   // Un fallo inesperado se le cuenta al agente en vez de dejarlo esperando
-  const envolver = fn => async p => {
-    try { return await fn(p || {}); }
-    catch (e) { console.error('[agente-voz]', e); return 'Ocurrió un error en la aplicación: ' + (e && e.message || e); }
+  // Cada llamada queda en la consola (F12) para revisar que pidio el agente y que se le respondio
+  const envolver = (nombre, fn) => async p => {
+    console.info('[agente-voz] ←', nombre, p);
+    let r;
+    try { r = await fn(p || {}); }
+    catch (e) { console.error('[agente-voz]', nombre, e); r = 'Ocurrió un error en la aplicación: ' + (e && e.message || e); }
+    console.info('[agente-voz] →', nombre, r);
+    return r;
   };
   const herramientas = Object.fromEntries(Object.entries({
     filtrar_elementos, limpiar_filtros, seleccionar_visibles, limpiar_seleccion,
     consultar_avance, consultar_cortes, registrar_corte, cambiar_estado_corte,
-  }).map(([k, fn]) => [k, envolver(fn)]));
+  }).map(([k, fn]) => [k, envolver(k, fn)]));
 
   // ── Widget ──
   function conectar(widget) {
-    widget.addEventListener('elevenlabs-convai:call', ev => { ev.detail.config.clientTools = herramientas; });
+    widget.addEventListener('elevenlabs-convai:call', ev => {
+      ev.detail.config.clientTools = herramientas;
+      console.info('[agente-voz] Conversación iniciada; herramientas registradas:', Object.keys(herramientas).join(', '));
+    });
   }
 
   function nuevoWidget() {
