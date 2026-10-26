@@ -166,6 +166,27 @@ test('historial debe firmarlo quien cambia', async () => {
   await assertFails(cambio(ctx(REG), 'n1', h0(REG), 'aprobacion', REG2));
 });
 
+// ── Rechazar ──
+test('admin rechaza un corte en revisión y lo reabre', async () => {
+  await sembrarCorte('n1', { ...corteBase(1, REG), ultimoCambio: 'x', historial: h0(REG) });
+  await assertSucceeds(cambio(ctx(ADMIN), 'n1', h0(REG), 'rechazado', ADMIN));
+  let h1;
+  await env.withSecurityRulesDisabled(async c => { h1 = (await getDoc(doc(c.firestore(), 'obras/o1/cortes/n1'))).data().historial; });
+  await assertSucceeds(cambio(ctx(ADMIN), 'n1', h1, 'revision', ADMIN));
+});
+test('registrador no rechaza', async () => {
+  await sembrarCorte('n1', { ...corteBase(1, REG), ultimoCambio: 'x', historial: h0(REG) });
+  await assertFails(cambio(ctx(REG), 'n1', h0(REG), 'rechazado', REG));
+});
+test('pagado no se rechaza', async () => {
+  await sembrarCorte('n1', { ...corteBase(1, REG), estado: 'pagado', ultimoCambio: 'x', historial: h0(REG) });
+  await assertFails(cambio(ctx(ADMIN), 'n1', h0(REG), 'rechazado', ADMIN));
+});
+test('rechazado no pasa directo a pagado', async () => {
+  await sembrarCorte('n1', { ...corteBase(1, REG), estado: 'rechazado', ultimoCambio: 'x', historial: h0(REG) });
+  await assertFails(cambio(ctx(ADMIN), 'n1', h0(REG), 'pagado', ADMIN));
+});
+
 // ── Anular ──
 test('registrador anula su corte en revision con motivo', async () => {
   await sembrarCorte('n1', { ...corteBase(1, REG), ultimoCambio: 'x', historial: h0(REG) });

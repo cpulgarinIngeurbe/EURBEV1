@@ -4,6 +4,23 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-10-27 (hora Colombia) · mejoras traídas de «eurbe 1.html»
+
+- Fondo del visor claro u oscuro (menú 🎨), recordado por navegador; los informes
+  salen siempre en claro.
+- Aristas marcadas (menú 🎨), encendidas por defecto en el tema claro.
+- Luz más suave en el tema claro, caras planas y niebla proporcional (solo con
+  tarjeta gráfica). El tema oscuro conserva la luz de siempre.
+- Estado de corte «Rechazado» (rojo): solo el administrador rechaza (desde revisión o
+  aprobación) y puede reabrir o anular. No cuenta como avance; filtro «Rechazados»;
+  también por voz. Cambia `firestore.rules`.
+- PDF de un solo corte o de todos (Exportar → PDF).
+- Excel de Contratos con miniaturas grandes y lámina (grupo, actividad, cantidades).
+- Contratos: cambiar de contrato reconstruye el árbol y suelta lo que no aplica.
+- Pestañas «Modelo de control» y «Pedidos» como maqueta («pronto»).
+- No se trajeron: filtro «Ejecutados (IFC)», cortes en el navegador, dibujo pieza por
+  pieza ni cambio de estado libre (irían contra la versión en la nube).
+
 ## 2026-10-27 (hora Colombia)
 
 - Filtro «Estado» con estados de pago: además de Pendientes y En cortes registrados,

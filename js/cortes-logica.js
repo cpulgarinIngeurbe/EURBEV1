@@ -11,8 +11,13 @@
     { de: 'revision',   a: 'anulado',    roles: ['admin'] },
     { de: 'aprobacion', a: 'anulado',    roles: ['admin'] },
     { de: 'revision',   a: 'anulado',    roles: ['registrador'], soloPropio: true },
+    // Rechazado: devuelto por el administrador; no cuenta como avance
+    { de: 'revision',   a: 'rechazado',  roles: ['admin'] },
+    { de: 'aprobacion', a: 'rechazado',  roles: ['admin'] },
+    { de: 'rechazado',  a: 'revision',   roles: ['admin'] },
+    { de: 'rechazado',  a: 'anulado',    roles: ['admin'] },
   ];
-  const ACTIVOS = ['revision', 'aprobacion', 'pagado'];
+  const ACTIVOS = ['revision', 'aprobacion', 'pagado', 'rechazado'];
   const MOTIVO_IMPORTADO = 'importado desde versión local';
 
   function destinosPermitidos(rol, corte, correo) {

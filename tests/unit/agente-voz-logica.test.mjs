@@ -139,3 +139,14 @@ test('estado del filtro: pendiente, en corte y estados de pago', () => {
   assert.equal(estadoDeFiltro('todos'), 'all');
   assert.equal(estadoDeFiltro('azul'), null);
 });
+
+test('rechazado: estado hablado, filtro y transiciones', () => {
+  assert.equal(normalizarEstado('rechazado'), 'rechazado');
+  assert.equal(normalizarEstado('rechazar'), 'rechazado');
+  assert.equal(estadoDeFiltro('lo rechazado'), 'rechazado');
+  assert.equal(transicionPermitida('revision', 'rechazado', 'admin'), true);
+  assert.equal(transicionPermitida('aprobacion', 'rechazado', 'admin'), true);
+  assert.equal(transicionPermitida('revision', 'rechazado', 'registrador'), false);
+  assert.equal(transicionPermitida('pagado', 'rechazado', 'admin'), false);
+  assert.equal(transicionPermitida('rechazado', 'revision', 'admin'), true);
+});

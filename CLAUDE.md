@@ -149,8 +149,16 @@ Medido con el federado y dibujo por software (equipo sin tarjeta gráfica):
   transparente solo está activa si alguna pieza es transparente (`MODELO.nTransp`),
   en la práctica solo en las capturas del PDF. Lo que no toca dibujar se saca de la
   pantalla en el vértice, sin `discard`.
-- **Lambert** (luz por vértice) y **sin niebla**: por software la luz por píxel
-  cuadruplicaba el tiempo.
+- **Lambert** (luz por vértice): por software la luz por píxel cuadruplicaba el tiempo.
+  Cada cara lleva sus tres vértices propios (no compartidos) para que tenga su propio
+  tono (caras planas) sin pasar a luz por píxel. **Niebla** solo con tarjeta gráfica
+  (`VISOR.software` la deja apagada), proporcional al tamaño del modelo.
+- **Tema** (`TEMAS`, `setTema`): fondo + gris de pendiente + contorno + reparto de luz
+  (`LUCES_PRESETS`) van juntos; no se tocan sueltos. Los informes se capturan siempre
+  en claro (`forzarTemaCaptura`).
+- **Aristas** (`ARISTAS`): UN solo `LineSegments` para todo el modelo, perezoso, con
+  rango por pieza; `Pieza._alfa` las invalida y `animate()` las recompacta una vez por
+  fotograma. El relleno lleva `polygonOffset` para que no salgan punteadas.
 - **`VISOR`**: detecta dibujo por software (SwiftShader, llvmpipe, Basic Render) y
   entonces crea el renderer **sin antialias**. Resolución adaptativa: tres fotogramas
   lentos girando bajan la resolución (×0,4 software, ×0,5 GPU) y al soltar vuelve.

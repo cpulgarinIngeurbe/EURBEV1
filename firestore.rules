@@ -96,7 +96,7 @@ service cloud.firestore {
         }
         function importacion() {
           return esAdmin() && nuevo().importado == true
-            && nuevo().estado in ['revision', 'aprobacion', 'pagado'];
+            && nuevo().estado in ['revision', 'aprobacion', 'pagado', 'rechazado'];
         }
 
         function transicion(de, a) {
@@ -104,7 +104,9 @@ service cloud.firestore {
               || (de == 'aprobacion' && a == 'revision'   && esAdmin())
               || (de in ['revision', 'aprobacion'] && a == 'pagado' && esAdmin())
               || (de == 'pagado'     && a == 'aprobacion' && esAdmin())
-              || (de in ['revision', 'aprobacion'] && a == 'anulado' && esAdmin())
+              || (de in ['revision', 'aprobacion', 'rechazado'] && a == 'anulado' && esAdmin())
+              || (de in ['revision', 'aprobacion'] && a == 'rechazado' && esAdmin())
+              || (de == 'rechazado'  && a == 'revision'   && esAdmin())
               || (de == 'revision'   && a == 'anulado' && registra()
                   && resource.data.creadoPor == correo());
         }

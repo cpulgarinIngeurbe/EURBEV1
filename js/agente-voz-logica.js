@@ -86,6 +86,7 @@
     if (t.includes('revis')) return 'revision';
     if (t.includes('aprob')) return 'aprobacion';
     if (t.includes('pag')) return 'pagado';
+    if (t.includes('rechaz')) return 'rechazado';
     if (t.includes('anul')) return 'anulado';
     return null;
   }
@@ -125,7 +126,9 @@
     return (de === 'revision' && a === 'aprobacion' && registra)
         || (de === 'aprobacion' && a === 'revision' && admin)
         || ((de === 'revision' || de === 'aprobacion') && a === 'pagado' && admin)
-        || (de === 'pagado' && a === 'aprobacion' && admin);
+        || (de === 'pagado' && a === 'aprobacion' && admin)
+        || ((de === 'revision' || de === 'aprobacion') && a === 'rechazado' && admin)
+        || (de === 'rechazado' && a === 'revision' && admin);
   }
 
   const api = { normalizar, numeroDe, emparejar, normalizarEstado, crearConfirmador, transicionPermitida, estadoDeFiltro };

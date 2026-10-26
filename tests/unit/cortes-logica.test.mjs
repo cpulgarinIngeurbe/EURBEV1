@@ -17,8 +17,19 @@ test('registrador en aprobación: nada', () => {
 test('admin en pagado: solo devolver a aprobación', () => {
   assert.deepEqual(L.destinosPermitidos('admin', c('pagado'), 'a@x'), ['aprobacion']);
 });
-test('admin en aprobación: revision, pagado, anulado', () => {
-  assert.deepEqual(L.destinosPermitidos('admin', c('aprobacion'), 'a@x').sort(), ['anulado', 'pagado', 'revision']);
+test('admin en aprobación: revision, pagado, rechazado, anulado', () => {
+  assert.deepEqual(L.destinosPermitidos('admin', c('aprobacion'), 'a@x').sort(), ['anulado', 'pagado', 'rechazado', 'revision']);
+});
+test('admin en revisión puede rechazar; registrador no', () => {
+  assert.ok(L.destinosPermitidos('admin', c('revision'), 'a@x').includes('rechazado'));
+  assert.ok(!L.destinosPermitidos('registrador', c('revision', 'r@x'), 'r@x').includes('rechazado'));
+});
+test('rechazado: admin lo reabre o lo anula; nadie más lo mueve', () => {
+  assert.deepEqual(L.destinosPermitidos('admin', c('rechazado'), 'a@x').sort(), ['anulado', 'revision']);
+  assert.deepEqual(L.destinosPermitidos('registrador', c('rechazado', 'r@x'), 'r@x'), []);
+});
+test('pagado no se rechaza', () => {
+  assert.ok(!L.destinosPermitidos('admin', c('pagado'), 'a@x').includes('rechazado'));
 });
 test('consulta y anulado: nada', () => {
   assert.deepEqual(L.destinosPermitidos('consulta', c('revision'), 'r@x'), []);

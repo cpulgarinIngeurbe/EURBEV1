@@ -6,6 +6,8 @@
 <title>Bitácora BIM · Control de Obra</title>
 <style>
 :root {
+  /* Fondo del visor 3D. Lo cambia setTema(); el resto de la interfaz sigue clara. */
+  --c-visor: #1a1e24;
   --c-bg: #ffffff;
   --c-bg2: #f5f5f6;
   --c-surface: #ffffff;
@@ -49,7 +51,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
 /* ── LAYOUT ── */
 #app { display: flex; flex-direction: column; height: 100vh; }
 #main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
-#viewer-wrap { flex: 1; position: relative; background: #1a1e24; min-width: 0; }
+#viewer-wrap { flex: 1; position: relative; background: var(--c-visor); min-width: 0; }
 #canvas { display: block; width: 100%; height: 100%; }
 #canvas.marquee-ready { cursor: crosshair; }
 
@@ -331,6 +333,24 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
   font-family: var(--font); min-width: 120px; max-width: 180px; cursor: pointer;
 }
 
+/* ── OPCIONES DEL PDF ── */
+.pdf-opts {
+  margin-top: 4px; padding: 12px; background: var(--c-bg2);
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pdf-opts[hidden] { display: none !important; }
+.pdf-opts label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--c-text2);
+}
+.pdf-opts select {
+  padding: 6px 8px; font-size: 12px; font-family: var(--font);
+  border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+  background: var(--c-surface); color: var(--c-text); width: 100%;
+}
+.pdf-nota { font-size: 10px; color: var(--c-text3); line-height: 1.4; margin: 0; }
+
 /* ══════════ MÓDULO DE CONTRATOS ══════════ */
 .mod-tabs { display: flex; gap: 6px; margin-left: 20px; }
 .mod-tab {
@@ -340,6 +360,14 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
 }
 .mod-tab:hover { border-color: var(--c-accent-dark); }
 .mod-tab.activo { background: var(--c-accent); border-color: var(--c-accent-dark); color: #2d2d35; }
+/* Pestañas que aún no existen: se ven, pero se distinguen de las reales */
+.mod-tab.maqueta { border-style: dashed; color: var(--c-text3); }
+.mod-tab.maqueta::after {
+  content: 'pronto'; margin-left: 6px; font-size: 8px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--c-neutral1); color: var(--c-text3);
+  padding: 1px 4px; border-radius: 3px;
+}
 
 #mod-contratos { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 #mod-contratos[hidden] { display: none !important; }
@@ -417,7 +445,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
    altura cero, y el lienzo conserva el tamaño del otro módulo y se desborda
    por encima de la tabla. overflow:hidden es el cinturón de seguridad. */
 #ct-visor {
-  flex: 1; min-height: 160px; position: relative; background: #1a1e24;
+  flex: 1; min-height: 160px; position: relative; background: var(--c-visor);
   display: flex; overflow: hidden;
 }
 #ct-visor > #viewer-wrap { flex: 1; min-width: 0; min-height: 0; }
@@ -501,6 +529,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
 .color-menu button.activo .cm-chk { visibility: visible; }
 .color-menu button.activo { font-weight: 600; }
 .color-menu small { margin-left: auto; font-size: 9px; color: var(--c-text3); }
+.color-menu hr { border: none; border-top: 1px solid var(--c-border); margin: 6px 4px; }
 
 /* ── SEGMENTADOR DE FECHAS DE CORTE ── */
 #seg-fechas { margin-top: 10px; }
@@ -940,6 +969,8 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     <div class="mod-tabs">
       <button type="button" class="mod-tab" id="mtab-contratos" onclick="setModulo('contratos')">Contratos</button>
       <button type="button" class="mod-tab activo" id="mtab-cortes" onclick="setModulo('cortes')">Cortes de obra</button>
+      <button type="button" class="mod-tab maqueta" onclick="avisoMaqueta('Modelo de control')">Modelo de control</button>
+      <button type="button" class="mod-tab maqueta" onclick="avisoMaqueta('Pedidos')">Pedidos</button>
     </div>
     <div class="project-name">
       <strong id="project-name">Modelo BIM</strong>
@@ -955,7 +986,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       <aside class="ct-filtros">
         <div class="ct-contrato-sel" id="ct-contrato-wrap">
           <label>Contrato</label>
-          <select id="ct-contrato" onchange="ctAplicar()"><option value="">Todos</option></select>
+          <select id="ct-contrato" onchange="ctCambiarContrato()"><option value="">Todos</option></select>
         </div>
         <div class="ct-grupo ct-grupo-alto">
           <div class="ct-grupo-tit">Grupo de contrato</div>
@@ -1072,6 +1103,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       <option value="revision">· En revisión</option>
       <option value="aprobacion">· En aprobación</option>
       <option value="pagado">· Pagado</option>
+      <option value="rechazado">Rechazados</option>
     </select>
     <div class="filter-sep"></div>
     <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Limpiar</button>
@@ -1103,6 +1135,16 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
             <button type="button" data-modo="material" onclick="setColorMode('material')">
               <span class="cm-chk">✓</span><span>Materialidad del IFC</span>
               <small id="cm-mat-cuenta"></small></button>
+            <hr>
+            <div class="color-menu-tit">Visualización</div>
+            <button type="button" id="cm-aristas" onclick="toggleAristas()">
+              <span class="cm-chk">✓</span><span>Aristas marcadas</span></button>
+            <hr>
+            <div class="color-menu-tit">Fondo del visor</div>
+            <button type="button" data-tema="oscuro" onclick="elegirTema('oscuro')">
+              <span class="cm-chk">✓</span><span>Oscuro</span></button>
+            <button type="button" data-tema="claro" onclick="elegirTema('claro')">
+              <span class="cm-chk">✓</span><span>Claro</span></button>
           </div>
         </div>
       </div>
@@ -1127,6 +1169,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         <div class="legend-item"><div class="legend-dot" style="background:#BEDD81"></div>Seleccionado</div>
         <div class="legend-item"><div class="legend-dot" style="background:#3A7FC1"></div>En revisión</div>
         <div class="legend-item"><div class="legend-dot" style="background:#F5892A"></div>En aprobación</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#E05050"></div>Rechazado</div>
         <div class="legend-item"><div class="legend-dot" style="background:#5AB87A"></div>Pagado</div>
       </div>
     </div>
@@ -1341,12 +1384,18 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
           <span>Tabla de actividades con totales, ejecutado y pendiente</span>
         </div>
       </div>
-      <div class="export-opt" onclick="exportPDF()">
+      <div class="export-opt" onclick="abrirOpcionesPDF()">
         <div class="opt-icon">🖨️</div>
         <div class="opt-info">
           <strong>PDF — Imprimir reporte</strong>
-          <span>Vista de impresión formateada del historial</span>
+          <span>Todo el historial o un solo corte, con su vista 3D</span>
         </div>
+      </div>
+      <div class="pdf-opts" id="pdf-opts" hidden>
+        <label for="pdf-corte">¿Qué quieres imprimir?</label>
+        <select id="pdf-corte"><option value="">Todos los cortes</option></select>
+        <p class="pdf-nota" id="pdf-nota"></p>
+        <button type="button" class="btn btn-primary btn-sm" onclick="exportPDF()">🖨️ Generar PDF</button>
       </div>
     </div>
     <div style="margin-top:20px;text-align:right">
@@ -1399,6 +1448,7 @@ const STATE = {
   selected: new Set(),
   cutElements: new Set(),  // globalIds en cualquier corte registrado
   cutStateByElement: new Map(), // globalId -> estado (revision/aprobacion/pagado)
+  rejectedElements: new Set(),  // elementos cuyos cortes estan todos rechazados
   cuts: [],
   modelOffset: [0,0,0],
   mode: 'select',
@@ -1454,6 +1504,11 @@ let moduloActivo = 'cortes';
 // Grupos que no aportan nada a una solicitud de contrato
 const CT_GRUPOS_IGNORADOS = new Set(['', '0', '-', 'n/a', 'na', 'sin grupo', '(sin grupo)']);
 const ctGrupoUtil = g => !CT_GRUPOS_IGNORADOS.has(String(g || '').trim().toLowerCase());
+
+function avisoMaqueta(nombre) {
+  notify(`«${nombre}» todavía no está desarrollado`);
+  setStatusBar(`El módulo «${nombre}» está previsto pero aún no se ha construido.`);
+}
 
 function setModulo(m) {
   if (m === moduloActivo) return;
@@ -1752,6 +1807,39 @@ function ctFilas() {
   return { rows, tot, visibles };
 }
 
+// Cambiar de contrato tiene que RECONSTRUIR el arbol: ctAplicar solo recalcula
+// la tabla, y la lista seguia mostrando los grupos de todos los contratos.
+function ctCambiarContrato() {
+  const sel = document.getElementById('ct-contrato');
+  CT.contrato = sel ? sel.value : '';
+  ctPodarSeleccion();
+  ctConstruirFiltros();
+  ctAplicar();
+}
+
+// Suelta lo marcado que no exista dentro del contrato elegido. Sin esto queda
+// un filtro invisible: casillas de otro contrato que no se ven en el arbol
+// pero siguen acotando, y la tabla sale en cero sin explicacion.
+function ctPodarSeleccion() {
+  const dentro = STATE.elements.filter(el => !CT.contrato || (el.contrato || '') === CT.contrato);
+  const claves = new Set(), niveles = new Set(), grupos = new Set();
+  for (const el of dentro) {
+    const g = el.descGrupo || '';
+    if (ctGrupoUtil(g)) { grupos.add(g); claves.add(g + '\u0000' + (el.actividad || '(sin actividad)')); }
+    if (el.nivel) niveles.add(el.nivel);
+  }
+  CT.actividades.forEach(k => { if (!claves.has(k)) CT.actividades.delete(k); });
+  CT.niveles.forEach(v => { if (!niveles.has(v)) CT.niveles.delete(v); });
+  CT.abiertos.forEach(g => { if (!grupos.has(g)) CT.abiertos.delete(g); });
+  [1, 2].forEach(i => {
+    const o = CT.opc[i];
+    if (!o.param || !o.vals.size) return;
+    const vivos = new Set();
+    for (const el of dentro) { const v = ctValor(el, o.param); if (v !== '') vivos.add(v); }
+    o.vals.forEach(v => { if (!vivos.has(v)) o.vals.delete(v); });
+  });
+}
+
 function ctAplicar() {
   if (!STATE.elements.length) return;
   const sc = document.getElementById('ct-contrato');
@@ -1807,7 +1895,7 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
   const imgs = new Array(rows.length).fill(null);
   if (!renderer || !scene || !camera || !rows.length) return imgs;
 
-  const ANCHO = 360, ALTO = 230;
+  const ANCHO = 760, ALTO = 430;
   const wrap = document.getElementById('viewer-wrap');
   const grids = scene.children.filter(o => o.isGridHelper || o.type === 'GridHelper');
   const guardado = {
@@ -1831,10 +1919,12 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
   }
 
   captureMode = true;
+  const temaPrevio = forzarTemaCaptura();
   try {
     scene.fog = null;
     grids.forEach(g => g.visible = false);
-    renderer.setClearColor(0x1a1e24);
+    // Fondo claro tambien en las miniaturas: el Excel se mira e imprime en blanco
+    renderer.setClearColor(0xF4F5F7);
     renderer.setPixelRatio(1);
     renderer.setSize(ANCHO, ALTO, false);
     camera.aspect = ANCHO / ALTO;
@@ -1862,8 +1952,10 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
       camera.near = Math.max(0.05, dist/800); camera.far = dist*12 + 2000;
       camera.updateProjectionMatrix(); camera.lookAt(cen);
 
+      // animate() no corre durante la captura: el contorno se recompacta aqui
+      refrescarAristas(gid => gids.has(gid));
       renderer.render(scene, camera);
-      try { imgs[i] = renderer.domElement.toDataURL('image/jpeg', 0.78).split(',')[1]; }
+      try { imgs[i] = ctComponerLamina(renderer.domElement, r); }
       catch(e) { imgs[i] = null; }
 
       if (onProgreso) onProgreso(i + 1, rows.length);
@@ -1875,8 +1967,11 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
       if (!m || !s) return;
       m.material.color.setHex(s.color); m.visible = s.visible;
     });
+    restaurarTemaCaptura(temaPrevio);
+    refrescarAristas();
     scene.fog = guardado.fog;
     grids.forEach((g,i) => g.visible = guardado.gridsVisible[i]);
+    renderer.setClearColor(FONDO_VISOR);
     renderer.setPixelRatio(guardado.pixelRatio);
     camera.near = guardado.near; camera.far = guardado.far;
     camera.position.copy(guardado.camPos);
@@ -1888,6 +1983,62 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
     ctAplicar();
   }
   return imgs;
+}
+
+// Memoria grafica de una linea: el render 3D con una cabecera que dice a que
+// grupo y actividad corresponde y un pie con sus cantidades. Sin eso la imagen
+// suelta no dice de que es.
+function ctComponerLamina(lienzo3D, fila) {
+  const W = lienzo3D.width, CAB = 74, PIE = 46;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = lienzo3D.height + CAB + PIE;
+  const x = cv.getContext('2d');
+
+  x.fillStyle = '#17211D'; x.fillRect(0, 0, W, CAB);
+  x.fillStyle = '#42D67A';
+  x.font = 'bold 11px "Segoe UI", sans-serif';
+  x.fillText('SOLICITUD DE CONTRATO', 14, 19);
+  const recorta = (t, max) => {
+    t = String(t || '—');
+    if (x.measureText(t).width <= max) return t;
+    while (t.length > 4 && x.measureText(t + '…').width > max) t = t.slice(0, -1);
+    return t + '…';
+  };
+  x.fillStyle = '#CFD9D4';
+  x.font = '10px "Segoe UI", sans-serif';
+  x.fillText('Grupo', 14, 38);
+  x.fillText('Actividad', 14, 58);
+  x.fillStyle = '#FFFFFF';
+  x.font = 'bold 12px "Segoe UI", sans-serif';
+  x.fillText(recorta(fila.grupo, W - 90), 72, 38);
+  x.fillText(recorta(fila.actividad, W - 90), 72, 58);
+
+  x.drawImage(lienzo3D, 0, CAB);
+
+  const y0 = CAB + lienzo3D.height;
+  x.fillStyle = '#B9D98A'; x.fillRect(0, y0, W, PIE);
+  const datos = [
+    ['ÁREA m²', ctFmt(fila.area)], ['VOLUMEN m³', ctFmt(fila.volumen)],
+    ['LONGITUD m', ctFmt(fila.longitud)], ['ALTURA m', ctFmt(fila.altura)],
+    ['UND', ctEnt(fila.und)],
+  ];
+  const anc = W / datos.length;
+  datos.forEach(([lbl, val], i) => {
+    const cx = i * anc + 12;
+    if (i) { x.strokeStyle = 'rgba(255,255,255,0.6)'; x.beginPath();
+             x.moveTo(i*anc, y0+8); x.lineTo(i*anc, y0+PIE-8); x.stroke(); }
+    x.fillStyle = '#46552F'; x.font = 'bold 8px "Segoe UI", sans-serif';
+    x.fillText(lbl, cx, y0 + 16);
+    x.fillStyle = '#1F2B16'; x.font = 'bold 13px "Segoe UI", sans-serif';
+    x.fillText(val, cx, y0 + 34);
+  });
+  if (fila.keynote) {
+    x.fillStyle = 'rgba(23,33,29,0.75)';
+    x.fillRect(W - 112, CAB + 8, 104, 20);
+    x.fillStyle = '#FFFFFF'; x.font = 'bold 10px "Segoe UI", sans-serif';
+    x.fillText(recorta(fila.keynote, 92), W - 104, CAB + 22);
+  }
+  return cv.toDataURL('image/jpeg', 0.82).split(',')[1];
 }
 
 // Exporta la tabla de cantidades tal como se está viendo,
@@ -1927,7 +2078,7 @@ async function ctExportar() {
     { header: 'Altura m',                   key: 'al',  width: 13 },
     { header: 'Unidades',                   key: 'un',  width: 10 },
     { header: 'Type_Keynote',               key: 'kn',  width: 16 },
-    { header: 'Imagen',                     key: 'im',  width: 28 },
+    { header: 'Memoria gráfica',            key: 'im',  width: 62 },
   ];
 
   const cab = ws.getRow(1);
@@ -1936,7 +2087,8 @@ async function ctExportar() {
   cab.alignment = { vertical: 'middle' };
   cab.height = 22;
 
-  const ALTO_FILA = 118, IMG_W = 180, IMG_H = 115;
+  // La imagen va mucho mayor: era ilegible al tamaño anterior
+  const IMG_W = 420, IMG_H = 304, ALTO_FILA = IMG_H * 0.76;
   rows.forEach((r, i) => {
     const fila = ws.addRow({ g: r.grupo, a: r.actividad, s: r.sentido,
       ar: r2(r.area), vo: r2(r.volumen), lo: r2(r.longitud), al: r2(r.altura),
@@ -2776,8 +2928,10 @@ function loadModel(data) {
     camera.aspect = wrap2.clientWidth / wrap2.clientHeight;
     camera.updateProjectionMatrix();
     const _con = elementosConColor();
+    const _ar = iniciarAristas();
     setStatusBar(`Modelo cargado · ${STATE.elements.length} elementos`
       + (_con ? ` · ${_con} con color de materialidad (botón 🎨)` : ' · sin colores de materialidad')
+      + (_ar.on ? ' · aristas marcadas activas' : '')
       + ` · Clic para seleccionar · Shift+Clic múltiple · Ctrl+Arrastrar para ventana`);
     
     // Load cuts from localStorage if any
@@ -2823,6 +2977,103 @@ const VISOR = {
   },
 };
 
+// ── TEMA DEL VISOR ────────────────────────────
+// Un tema no es solo el fondo: arrastra cuatro cosas que se sostienen entre si
+// y que por eso no se tocan sueltas: fondo + gris de lo pendiente + color del
+// contorno + reparto de luz. Un pendiente casi blanco sobre fondo oscuro
+// deslumbra, y un contorno oscuro sobre fondo oscuro no se ve. Abre en oscuro.
+const TEMAS = {
+  // El visor de siempre, tal cual
+  oscuro: { fondo: 0x1a1e24, css: '#1a1e24', pending: 0xd0d0d8,
+            arista: 0xE6E9EF, opacidad: 0.22, contraste: 'original', aristas: false,
+            rejilla: [0x303040, 0x252530] },
+  // Afinado el 2026-10-08 con los referentes de la usuaria: aqui la silueta
+  // la da el contorno, no el relleno, por eso las aristas vienen encendidas
+  claro:  { fondo: 0xFFFFFF, css: '#FFFFFF', pending: 0xF2F3F5,
+            arista: 0x3C4149, opacidad: 0.62, contraste: 'suave', aristas: true,
+            rejilla: [0xD5D9E0, 0xE8EBEF] },
+};
+const TEMA_LS = 'eurbe_tema';
+let TEMA = (function () {
+  try { const g = localStorage.getItem(TEMA_LS); if (TEMAS[g]) return g; } catch (e) {}
+  return 'oscuro';
+})();
+// Lo leen el renderer, la niebla y la restauracion tras una captura
+let FONDO_VISOR = TEMAS[TEMA].fondo;
+let REJILLA = null;
+
+function ponerRejilla(t) {
+  if (!scene) return;
+  const y = REJILLA ? REJILLA.position.y : 0;
+  if (REJILLA) { scene.remove(REJILLA); REJILLA.geometry.dispose(); REJILLA.material.dispose(); }
+  REJILLA = new THREE.GridHelper(200, 40, t.rejilla[0], t.rejilla[1]);
+  REJILLA.position.y = y;
+  scene.add(REJILLA);
+}
+
+function setTema(nombre, guardar) {
+  const t = TEMAS[nombre];
+  if (!t) return false;
+  TEMA = nombre;
+  FONDO_VISOR = t.fondo;
+  COLORS.pending = t.pending;
+  document.documentElement.style.setProperty('--c-visor', t.css);
+  if (renderer) renderer.setClearColor(t.fondo);
+  if (scene && scene.fog) scene.fog.color.setHex(t.fondo);
+  ponerRejilla(t);
+  aplicarContraste(t.contraste);
+  setAristaAspecto(t.arista, t.opacidad);
+  // Las aristas se recuerdan POR TEMA
+  let g = null;
+  try { g = localStorage.getItem(claveAristas()); } catch (e) {}
+  if (MODELO.geo) setAristas(g === null ? t.aristas : g === '1', false);
+  marcarTema();
+  if (STATE.elements.length) refreshAllColors();
+  if (guardar !== false) { try { localStorage.setItem(TEMA_LS, nombre); } catch (e) {} }
+  pedirRender();
+  return true;
+}
+
+function marcarTema() {
+  const m = document.getElementById('color-menu');
+  if (!m) return;
+  m.querySelectorAll('[data-tema]').forEach(b => b.classList.toggle('activo', b.dataset.tema === TEMA));
+}
+
+function elegirTema(nombre) {
+  const m = document.getElementById('color-menu');
+  if (m) m.hidden = true;
+  if (!setTema(nombre)) return;
+  setStatusBar('Fondo ' + nombre + '. Se recuerda para la próxima vez que abras '
+    + 'la aplicación. Los informes salen siempre con fondo claro.');
+}
+
+// ── CONTRASTE DE LAS LUCES ────────────────────
+// En el claro manda el TOTAL: ambiente + hemisferica + focos no debe pasar de
+// 1, o las caras claras se queman a blanco y el modelo se desarma contra el
+// fondo. Los focos aportan su intensidad por el coseno respecto a la normal.
+const LUCES_PRESETS = {
+  //          ambiente  hemisferica  foco1  foco2   cara arriba / cara en sombra
+  suave:   { amb: 0.74, hemi: 0.16, f1: 0.07, f2: 0.03 },  // 0.96 / 0.89
+  media:   { amb: 0.62, hemi: 0.22, f1: 0.13, f2: 0.06 },  // 0.98 / 0.83
+  marcada: { amb: 0.50, hemi: 0.26, f1: 0.22, f2: 0.10 },  // 1.01 / 0.74
+  // El reparto de siempre del visor oscuro: pasa de 1 a proposito, sobre
+  // fondo oscuro eso da cuerpo en vez de quemar
+  original:{ amb: 0.55, hemi: 0.00, f1: 0.70, f2: 0.25 },  // 1.24 / 0.67
+};
+const LUCES = {};
+
+function aplicarContraste(nombre) {
+  const p = LUCES_PRESETS[nombre];
+  if (!p || !LUCES.ambiente) return false;
+  LUCES.ambiente.intensity = p.amb;
+  LUCES.hemi.intensity     = p.hemi;
+  LUCES.foco1.intensity    = p.f1;
+  LUCES.foco2.intensity    = p.f2;
+  pedirRender();
+  return true;
+}
+
 function initScene() {
   const wrap = document.getElementById('viewer-wrap');
   const w = wrap.clientWidth, h = wrap.clientHeight;
@@ -2836,28 +3087,29 @@ function initScene() {
   renderer.shadowMap.enabled = false;
   const _setSize = renderer.setSize.bind(renderer);
   renderer.setSize = (...args) => { _setSize(...args); pedirRender(); };
-  renderer.setClearColor(0x1a1e24);
+  renderer.setClearColor(FONDO_VISOR);
 
   scene = new THREE.Scene();
-  scene.fog = null;   // sin niebla: por software cuesta y apenas se nota
+  // Sin niebla por software (cuesta y apenas se nota). Con tarjeta grafica si,
+  // del color del fondo y proporcional al modelo (la ajusta buildMeshes).
+  scene.fog = VISOR.software ? null : new THREE.Fog(FONDO_VISOR, 150, 500);
 
   camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
   camera.position.set(30, 40, 60);
   camera.lookAt(0, 0, 0);
 
-  // Lights
-  const ambient = new THREE.AmbientLight(0xffffff, 0.55);
-  scene.add(ambient);
-  const dirL = new THREE.DirectionalLight(0xffffff, 0.7);
-  dirL.position.set(30, 60, 30);
-  scene.add(dirL);
-  const dirL2 = new THREE.DirectionalLight(0xffffff, 0.25);
-  dirL2.position.set(-20, 20, -30);
-  scene.add(dirL2);
-
-  // Grid
-  const grid = new THREE.GridHelper(200, 40, 0x303040, 0x252530);
-  scene.add(grid);
+  // Luces. El reparto lo decide LUCES_PRESETS segun el tema.
+  LUCES.ambiente = new THREE.AmbientLight(0xffffff, 1);
+  scene.add(LUCES.ambiente);
+  // Hemisferica: degradado suave de cielo a suelo, sin el borde duro de un foco
+  LUCES.hemi = new THREE.HemisphereLight(0xffffff, 0xDFE4EA, 0);
+  scene.add(LUCES.hemi);
+  LUCES.foco1 = new THREE.DirectionalLight(0xffffff, 1);
+  LUCES.foco1.position.set(30, 60, 30);
+  scene.add(LUCES.foco1);
+  LUCES.foco2 = new THREE.DirectionalLight(0xffffff, 1);
+  LUCES.foco2.position.set(-20, 20, -30);
+  scene.add(LUCES.foco2);
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
@@ -2875,6 +3127,9 @@ function initScene() {
 
   meshGroup = new THREE.Group();
   scene.add(meshGroup);
+  // Rejilla, luces y colores del tema guardado (oscuro la primera vez)
+  REJILLA = null;
+  setTema(TEMA, false);
 
   animate();
 
@@ -2898,6 +3153,9 @@ let _ultimoRender = 0, _girando = false;
 function animate() {
   requestAnimationFrame(animate);
   if (captureMode) return;
+  // Un solo recompactado por fotograma: un filtro que cambia 16.000
+  // visibilidades no rehace el buffer de aristas 16.000 veces
+  if (aristasSucias) { refrescarAristas(); necesitaRender = true; }
   const movio = controls.update();
   const ahora = performance.now();
   const camCambio = !_ultimaCam.equals(camera.matrixWorld);
@@ -2930,6 +3188,9 @@ function materialModelo(transparente) {
   const m = new THREE.MeshLambertMaterial({
     color: 0xffffff, vertexColors: true,
     side: THREE.DoubleSide, transparent: transparente, depthWrite: !transparente,
+    // Hunde el relleno medio paso en profundidad para que las aristas se
+    // dibujen limpias encima y no salgan punteadas contra su propia cara
+    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1,
   });
   // Lo que no toca dibujar en esta pasada se saca de la pantalla en el
   // vertice (sin «discard» por pixel, que por software anula optimizaciones).
@@ -2984,7 +3245,165 @@ class Pieza {
     }
     v.fill(a, this.v0, this.v0 + this.nv);
     MODELO.geo.attributes.aVis.needsUpdate = true; pedirRender();
+    if ((antes === 0) !== (a === 0)) invalidarAristas();
   }
+}
+
+// ── ARISTAS DE LAS PIEZAS ─────────────────────
+// Sin contorno, una losa pegada a otra se lee como una sola mancha. UN SOLO
+// objeto para todos los contornos (como la geometria unida: un envio a la GPU).
+// `base` guarda los segmentos agrupados por pieza y `rango` dice donde empieza
+// cada una; mostrar un subconjunto es copiar sus trozos al principio de `buf`
+// y limitar el dibujo. Se construyen PEREZOSAMENTE, la primera vez que se
+// encienden. En WebGL el grosor de linea es siempre 1 px: lo fino se consigue
+// con opacidad, no con grosor.
+const ARISTAS_ANGULO = 25;      // grados; por debajo la arista no se dibuja
+function claveAristas() { return 'eurbe_aristas_' + TEMA; }
+let aristasOn = false, aristasListas = false, aristasSucias = false, matAristas = null;
+const ARISTAS = { obj: null, base: null, buf: null, rango: null, usados: 0 };
+const ARISTA_ASPECTO = { color: 0x3C4149, opacidad: 0.62 };
+
+function materialAristas() {
+  if (!matAristas) matAristas = new THREE.LineBasicMaterial({
+    color: ARISTA_ASPECTO.color, transparent: true, opacity: ARISTA_ASPECTO.opacidad });
+  return matAristas;
+}
+
+function setAristaAspecto(color, opacidad) {
+  if (color !== undefined && color !== null) ARISTA_ASPECTO.color = color;
+  if (opacidad !== undefined && opacidad !== null) ARISTA_ASPECTO.opacidad = opacidad;
+  if (matAristas) {
+    matAristas.color.setHex(ARISTA_ASPECTO.color);
+    matAristas.opacity = ARISTA_ASPECTO.opacidad;
+    matAristas.needsUpdate = true;
+    pedirRender();
+  }
+  return ARISTA_ASPECTO;
+}
+
+function construirAristas() {
+  if (aristasListas || !MODELO.geo) return;
+  const pos = MODELO.geo.attributes.position.array;
+  const trozos = [];
+  let total = 0;
+  for (const pz of MODELO.piezas) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos.slice(pz.v0 * 3, (pz.v0 + pz.nv) * 3), 3));
+    const eg = new THREE.EdgesGeometry(g, ARISTAS_ANGULO);
+    const arr = eg.attributes.position.array;
+    eg.dispose(); g.dispose();
+    if (!arr.length) continue;
+    trozos.push([pz.userData.globalId, arr]);
+    total += arr.length;
+  }
+  ARISTAS.base = new Float32Array(total);
+  ARISTAS.buf  = new Float32Array(total);
+  ARISTAS.rango = new Map();
+  let off = 0;
+  for (const [gid, arr] of trozos) {
+    ARISTAS.base.set(arr, off);
+    ARISTAS.rango.set(gid, [off, arr.length]);
+    off += arr.length;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(ARISTAS.buf, 3));
+  ARISTAS.obj = new THREE.LineSegments(geo, materialAristas());
+  ARISTAS.obj.frustumCulled = false;   // el recorte lo hace drawRange
+  // Despues de las mallas transparentes de la captura del PDF (renderOrder 10)
+  ARISTAS.obj.renderOrder = 20;
+  ARISTAS.obj.raycast = () => {};
+  // Cuelga de scene, NO de meshGroup: resetCamera encuadra con meshGroup
+  scene.add(ARISTAS.obj);
+  aristasListas = true;
+  refrescarAristas();
+}
+
+function descartarAristas() {
+  if (ARISTAS.obj) {
+    if (ARISTAS.obj.parent) ARISTAS.obj.parent.remove(ARISTAS.obj);
+    ARISTAS.obj.geometry.dispose();
+  }
+  ARISTAS.obj = ARISTAS.base = ARISTAS.buf = ARISTAS.rango = null;
+  ARISTAS.usados = 0;
+  aristasListas = false; aristasSucias = false;
+}
+
+// Bandera barata: el trabajo de verdad lo hace animate() una vez por fotograma
+function invalidarAristas() { aristasSucias = true; }
+
+// `incluir(gid)` permite pedir un subconjunto distinto del visible (capturas)
+function refrescarAristas(incluir) {
+  aristasSucias = false;
+  if (!aristasListas || !ARISTAS.obj) return 0;
+  ARISTAS.obj.visible = aristasOn;
+  if (!aristasOn) { pedirRender(); return 0; }
+  const quiero = incluir || (gid => { const m = STATE.meshes[gid]; return !!m && m.visible; });
+  const base = ARISTAS.base, buf = ARISTAS.buf;
+  let off = 0;
+  ARISTAS.rango.forEach((r, gid) => {
+    if (!quiero(gid)) return;
+    buf.set(base.subarray(r[0], r[0] + r[1]), off);
+    off += r[1];
+  });
+  ARISTAS.usados = off;
+  const geo = ARISTAS.obj.geometry;
+  geo.setDrawRange(0, off / 3);          // drawRange cuenta VERTICES, no floats
+  if (off > 0) {
+    const attr = geo.attributes.position;
+    attr.updateRange.offset = 0;
+    attr.updateRange.count = off;        // solo se sube la parte en uso
+    attr.needsUpdate = true;
+  }
+  pedirRender();
+  return off / 6;
+}
+
+function setAristas(on, guardar) {
+  aristasOn = !!on;
+  if (aristasOn) construirAristas();
+  refrescarAristas();
+  const b = document.getElementById('cm-aristas');
+  if (b) b.classList.toggle('activo', aristasOn);
+  if (guardar !== false) { try { localStorage.setItem(claveAristas(), aristasOn ? '1' : '0'); } catch (e) {} }
+}
+
+function toggleAristas() {
+  const t0 = performance.now();
+  setAristas(!aristasOn);
+  const ms = Math.round(performance.now() - t0);
+  setStatusBar(aristasOn
+    ? 'Aristas marcadas activadas (' + ms + ' ms en dibujar los contornos). '
+      + 'Si al girar se siente pesado, vuelve a apagarlas en el botón 🎨.'
+    : 'Aristas marcadas desactivadas.');
+}
+
+// Estado inicial: lo que diga el tema, salvo que se cambiara a mano antes
+function iniciarAristas() {
+  let guardado = null;
+  try { guardado = localStorage.getItem(claveAristas()); } catch (e) {}
+  const on = guardado === null ? !!TEMAS[TEMA].aristas : guardado === '1';
+  setAristas(on, false);
+  return { on };
+}
+
+// ── LAS CAPTURAS DE INFORME NO SIGUEN EL TEMA ─────────────────────────────
+// PDF y Excel se miran en papel blanco: toda captura se hace con la paleta
+// clara y con el contorno encendido, este como este la pantalla.
+function forzarTemaCaptura() {
+  const t = TEMAS.claro;
+  const previo = { pending: COLORS.pending, arista: ARISTA_ASPECTO.color,
+                   opacidad: ARISTA_ASPECTO.opacidad, aristasOn };
+  COLORS.pending = t.pending;
+  setAristaAspecto(t.arista, t.opacidad);
+  if (!aristasOn) { aristasOn = true; construirAristas(); }
+  return previo;
+}
+
+function restaurarTemaCaptura(previo) {
+  if (!previo) return;
+  COLORS.pending = previo.pending;
+  setAristaAspecto(previo.arista, previo.opacidad);
+  aristasOn = previo.aristasOn;
 }
 
 // Clic: primero la caja de cada pieza visible, luego sus triangulos. Ignora lo
@@ -3013,11 +3432,19 @@ function buildMeshes() {
   MODELO.piezas = [];
   if (MODELO.opaco) { meshGroup.remove(MODELO.opaco); meshGroup.remove(MODELO.transp); MODELO.geo.dispose(); }
 
-  // 1) Tamano total
+  // Las mallas se rehacen: los contornos del modelo anterior ya no valen
+  descartarAristas();
+
+  // 1) Tamano total. Cada cara lleva SUS TRES vertices (no compartidos): asi
+  // computeVertexNormals da la normal de la cara y cada una toma su propio
+  // tono (caras planas). Con vertices compartidos la luz se promediaba entre
+  // caras y las esquinas de losas y muros se veian difusas, «redondeadas».
+  // Sigue siendo luz por vertice (Lambert), la que es rapida por software.
   let nV = 0, nT = 0;
   for (const el of STATE.elements) {
     if (!el.vertices || !el.vertices.length) continue;
-    nV += el.vertices.length; nT += (el.faces || []).length;
+    const nf = (el.faces || []).length;
+    nV += nf * 3; nT += nf;
   }
   const pos = new Float32Array(nV * 3), idx = new Uint32Array(nT * 3);
   MODELO.colores = new Float32Array(nV * 3);
@@ -3028,17 +3455,17 @@ function buildMeshes() {
   let v0 = 0, t0 = 0;
   for (const el of STATE.elements) {
     if (!el.vertices || !el.vertices.length) continue;
-    const nv = el.vertices.length, faces = el.faces || [], caja = new THREE.Box3();
-    for (let i = 0; i < nv; i++) {
-      const q = el.vertices[i], k = (v0 + i) * 3;
-      pos[k]     = q[0] - offset[0];
-      pos[k + 1] = q[2] - offset[2];
-      pos[k + 2] = -(q[1] - offset[1]);
-      caja.expandByPoint(punto.set(pos[k], pos[k + 1], pos[k + 2]));
-    }
+    const faces = el.faces || [], nv = faces.length * 3, caja = new THREE.Box3();
     for (let i = 0; i < faces.length; i++) {
-      const k = (t0 + i) * 3;
-      idx[k] = faces[i][0] + v0; idx[k + 1] = faces[i][1] + v0; idx[k + 2] = faces[i][2] + v0;
+      for (let j = 0; j < 3; j++) {
+        const q = el.vertices[faces[i][j]], vi = v0 + i * 3 + j, k = vi * 3;
+        if (!q) continue;
+        pos[k]     = q[0] - offset[0];
+        pos[k + 1] = q[2] - offset[2];
+        pos[k + 2] = -(q[1] - offset[1]);
+        caja.expandByPoint(punto.set(pos[k], pos[k + 1], pos[k + 2]));
+        idx[(t0 + i) * 3 + j] = vi;
+      }
     }
     const pz = new Pieza(MODELO.piezas.length, el.globalId, el, v0, nv, t0, faces.length, caja);
     MODELO.piezas.push(pz);
@@ -3068,6 +3495,9 @@ function buildMeshes() {
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   const dist = maxDim * 1.4;
+  // Niebla proporcional al modelo: fija en 150/500, en un federado grande
+  // destenia el edificio casi desde el frente. Ahora solo desvanece lo lejano.
+  if (scene.fog) { scene.fog.near = maxDim * 1.5; scene.fog.far = maxDim * 6; }
   camera.position.set(center.x + dist * 0.5, center.y + dist * 0.7, center.z + dist * 0.5);
   camera.lookAt(center);
   controls.target.copy(center);
@@ -3087,6 +3517,9 @@ function buildMeshes() {
 // ── MESH COLOR UTILS ──────────────────────────
 function getMeshColor(gid) {
   if (STATE.selected.has(gid)) return COLORS.selected;
+  // Rechazado y sin ningun corte valido: rojo, aunque cuente como pendiente
+  if (STATE.rejectedElements && STATE.rejectedElements.has(gid) && !STATE.cutElements.has(gid))
+    return parseInt(CUT_ESTADOS.rechazado.color.slice(1), 16);
   if (STATE.cutElements.has(gid)) {
     // Fuera del rango de fechas elegido, el elemento se muestra como pendiente
     if (SEG.visibles && !SEG.visibles.has(gid)) return COLORS.pending;
@@ -3436,7 +3869,12 @@ const CUT_ESTADOS = {
   revision:   { lbl: 'En revisión',   color: '#3A7FC1', bg: '#EEF6FF' },
   aprobacion: { lbl: 'En aprobación', color: '#F5892A', bg: '#FFF4EA' },
   pagado:     { lbl: 'Pagado',        color: '#5AB87A', bg: '#EEF9F1' },
+  // Devuelto por el administrador: sigue en el historial pero NO es avance;
+  // sus elementos vuelven a pendientes y se pintan en rojo
+  rechazado:  { lbl: 'Rechazado',     color: '#E05050', bg: '#FDEEEE' },
 };
+// Un corte rechazado no cuenta como ejecutado
+const CUT_ESTADOS_EJECUTADOS = new Set(['revision', 'aprobacion', 'pagado']);
 // Anulado no entra en CUT_ESTADOS: esos cortes nunca estan en STATE.cuts
 const ESTADO_ANULADO = { lbl: 'Anulado', color: '#999', bg: '#f2f2f2' };
 const CUT_ESTADO_DEFECTO = 'revision';
@@ -3449,13 +3887,17 @@ function estadoDeCorte(cut) {
 // Indice globalId -> estado del corte, para colorear el 3D sin recorrer
 // todos los cortes en cada elemento. Si un elemento quedo en varios cortes
 // manda el estado mas avanzado, porque lo que interesa es si ya se pago.
+// Los rechazados van aparte (rejectedElements) y nunca tapan un corte valido.
 const ORDEN_ESTADO = { revision: 0, aprobacion: 1, pagado: 2 };
 function rebuildCutIndex() {
   STATE.cutElements.clear();
   STATE.cutStateByElement = new Map();
+  STATE.rejectedElements = new Set();
   STATE.cuts.forEach(ct => {
     const est = estadoDeCorte(ct);
+    const cuenta = CUT_ESTADOS_EJECUTADOS.has(est);
     (ct.elementIds || []).forEach(gid => {
+      if (!cuenta) { STATE.rejectedElements.add(gid); return; }
       STATE.cutElements.add(gid);
       const prev = STATE.cutStateByElement.get(gid);
       if (!prev || ORDEN_ESTADO[est] > ORDEN_ESTADO[prev]) {
@@ -3885,7 +4327,9 @@ function applyFilters() {
     if (estado === 'pending' && STATE.cutElements.has(el.globalId)) show = false;
     if (estado === 'cut' && !STATE.cutElements.has(el.globalId)) show = false;
     // Un estado de pago concreto: el que manda en el elemento (el mas avanzado de sus cortes)
-    if (CUT_ESTADOS[estado] && STATE.cutStateByElement.get(el.globalId) !== estado) show = false;
+    if (estado === 'rechazado') {
+      if (!STATE.rejectedElements.has(el.globalId) || STATE.cutElements.has(el.globalId)) show = false;
+    } else if (CUT_ESTADOS[estado] && STATE.cutStateByElement.get(el.globalId) !== estado) show = false;
 
     mesh.visible = show;
     if (show) visibleCount++;
@@ -4060,11 +4504,11 @@ function renderDashboard() {
 
   // ── Caja «Estado de cortes» (dato real) ──
   document.getElementById('av-cortes-total').textContent = STATE.cuts.length;
-  const porEstado = { revision: 0, aprobacion: 0, pagado: 0 };
+  const porEstado = { revision: 0, aprobacion: 0, pagado: 0, rechazado: 0 };
   STATE.cuts.forEach(ct => { porEstado[estadoDeCorte(ct)]++; });
-  // Se muestran en el orden del avance: pagado, aprobación, revisión
+  // Se muestran en el orden del avance: pagado, aprobación, revisión, y al final lo rechazado
   document.getElementById('av-cortes-estados').innerHTML =
-    ['pagado','aprobacion','revision'].map(k => {
+    ['pagado','aprobacion','revision','rechazado'].map(k => {
       const info = CUT_ESTADOS[k];
       return `<div class="av-estado-linea">
         <span class="av-punto" style="background:${info.color}"></span>
@@ -4426,7 +4870,33 @@ function buildActivityLegend() {
 //  EXPORT
 // ═══════════════════════════════════════════════
 function openExportModal()  { document.getElementById('export-modal').classList.add('open'); }
-function closeExportModal() { document.getElementById('export-modal').classList.remove('open'); }
+function closeExportModal() {
+  const po = document.getElementById('pdf-opts');
+  if (po) po.hidden = true;
+  document.getElementById('export-modal').classList.remove('open');
+}
+
+// Despliega las opciones del PDF con la lista de cortes registrados
+function abrirOpcionesPDF() {
+  const panel = document.getElementById('pdf-opts');
+  const sel = document.getElementById('pdf-corte');
+  if (!STATE.cuts.length) { alert('No hay cortes registrados para imprimir.'); return; }
+  sel.innerHTML = '<option value="">Todos los cortes</option>' +
+    STATE.cuts.slice().reverse().map(ct => {
+      const q = Object.entries(ct.qtyByUnit || {})
+        .map(([u, v]) => (+v || 0).toFixed(2) + ' ' + u).join(' · ') || '—';
+      return `<option value="${esc(ct.id)}">${esc(ct.number)} · ${esc(ct.date || '')}`
+           + ` · ${esc(ct.nivel || ct.actividad || '')} — ${esc(q)}</option>`;
+    }).join('');
+  sel.onchange = () => {
+    document.getElementById('pdf-nota').textContent = sel.value
+      ? 'Saldrá solo ese corte, con su desglose por actividad y su vista 3D.'
+      : 'Saldrá el historial completo, una ficha por corte y las cantidades pendientes.';
+  };
+  sel.onchange();
+  panel.hidden = false;
+  sel.focus();
+}
 
 document.getElementById('export-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('export-modal')) closeExportModal();
@@ -4475,7 +4945,8 @@ async function exportExcel() {
   XLSX.utils.book_append_sheet(wb, ws2, 'Cantidades por Actividad');
 
   // ── Hoja 3: consolidado de todo lo ejecutado (sin duplicar elementos) ──
-  const unionIds = [...new Set(STATE.cuts.flatMap(ct => ct.elementIds || []))];
+  const unionIds = [...new Set(STATE.cuts.filter(ct => CUT_ESTADOS_EJECUTADOS.has(estadoDeCorte(ct)))
+    .flatMap(ct => ct.elementIds || []))];
   const gTot = groupByActivity(unionIds, elById);
   const consRows = [['Edificación','Actividad','Desc. Grupo','Elementos','Cantidad','Unidad']];
   gTot.rows.forEach(r => consRows.push([r.edificacion || '', r.actividad, r.grupo || '',
@@ -4614,9 +5085,10 @@ function totalesToText(totales) {
 // Devuelve { cutId: dataURL } con una imagen por corte: los elementos del
 // corte en naranja solido y el resto del edificio en gris tenue, con la
 // camara ajustada a los elementos de ese corte.
-async function captureCutImages(onProgress) {
+async function captureCutImages(onProgress, soloEstos) {
   const images = {};
-  if (!renderer || !scene || !camera || !STATE.cuts.length) return images;
+  const lista = soloEstos && soloEstos.length ? soloEstos : STATE.cuts;
+  if (!renderer || !scene || !camera || !lista.length) return images;
 
   const CAP_W = 1000, CAP_H = 640;
   const wrap = document.getElementById('viewer-wrap');
@@ -4645,6 +5117,7 @@ async function captureCutImages(onProgress) {
   });
 
   captureMode = true;
+  const temaPrevio = forzarTemaCaptura();
   try {
     // ── Preparar escena para impresion: fondo claro, sin rejilla ni niebla ──
     scene.fog = null;
@@ -4656,9 +5129,9 @@ async function captureCutImages(onProgress) {
 
     const allGids = Object.keys(STATE.meshes);
 
-    for (let i = 0; i < STATE.cuts.length; i++) {
-      const cut = STATE.cuts[i];
-      if (onProgress) onProgress(i + 1, STATE.cuts.length);
+    for (let i = 0; i < lista.length; i++) {
+      const cut = lista[i];
+      if (onProgress) onProgress(i + 1, lista.length);
 
       const cutSet = new Set(cut.elementIds || []);
 
@@ -4707,6 +5180,9 @@ async function captureCutImages(onProgress) {
       camera.updateProjectionMatrix();
       camera.lookAt(center);
 
+      // Contorno SOLO en los elementos del corte: en los fantasmas las lineas
+      // tapaban el corte con una maraña
+      refrescarAristas(gid => cutSet.has(gid));
       renderer.render(scene, camera);
       try {
         images[cut.id] = renderer.domElement.toDataURL('image/jpeg', 0.82);
@@ -4730,9 +5206,11 @@ async function captureCutImages(onProgress) {
       m.renderOrder = s.renderOrder;
       m.visible = s.visible;
     });
+    restaurarTemaCaptura(temaPrevio);
+    refrescarAristas();
     scene.fog = saved.fog;
     grids.forEach((g, i) => g.visible = saved.gridsVisible[i]);
-    renderer.setClearColor(0x1a1e24);
+    renderer.setClearColor(FONDO_VISOR);
     renderer.setPixelRatio(saved.pixelRatio);
     renderer.setSize(wrap.clientWidth, wrap.clientHeight);
     camera.aspect = wrap.clientWidth / wrap.clientHeight;
@@ -4748,6 +5226,11 @@ async function captureCutImages(onProgress) {
 }
 
 async function exportPDF() {
+  // Un corte concreto, o todos si no se eligio ninguno
+  const selId = (document.getElementById('pdf-corte') || {}).value || '';
+  const cortes = selId ? STATE.cuts.filter(ct => String(ct.id) === String(selId)) : STATE.cuts.slice();
+  const unSoloCorte = !!selId;
+  if (!cortes.length) { alert('No se encontró el corte seleccionado.'); return; }
   closeExportModal();
 
   const win = window.open('', '_blank');
@@ -4762,14 +5245,14 @@ async function exportPDF() {
 
   // ── Capturar una vista 3D por corte ──
   let images = {};
-  if (STATE.cuts.length) {
+  if (cortes.length) {
     notify('📸 Capturando vistas 3D…');
     try {
       images = await captureCutImages((n, total) => {
         setStatusBar(`Capturando vista ${n} de ${total}…`);
         try { win.document.getElementById('st').textContent =
               `Capturando vista 3D ${n} de ${total}…`; } catch(e) {}
-      });
+      }, cortes);
     } catch(err) {
       console.warn('Fallo la captura de vistas 3D:', err);
       notify('⚠ No se pudieron capturar las vistas 3D');
@@ -4779,7 +5262,7 @@ async function exportPDF() {
 
   const date = new Date().toLocaleDateString('es-CO');
 
-  const cutsHtml = STATE.cuts.map(cut => {
+  const cutsHtml = cortes.map(cut => {
     const qtyStr = Object.entries(cut.qtyByUnit).map(([u,q]) => `${(+q || 0).toFixed(2)} ${esc(u)}`).join(', ');
     const inf = CUT_ESTADOS[estadoDeCorte(cut)];
     return `<tr>
@@ -4794,7 +5277,7 @@ async function exportPDF() {
   // ── Ficha por corte: desglose de cantidades + vista 3D ──
   const elById = buildElementIndex();
 
-  const fichasHtml = STATE.cuts.map(cut => {
+  const fichasHtml = cortes.map(cut => {
     const g = groupByActivity(cut.elementIds || [], elById);
 
     const colEdif = g.mostrarEdificacion;
@@ -4851,7 +5334,9 @@ async function exportPDF() {
   }).join('');
 
   // ── Consolidado de todo lo ejecutado, por actividad ──
-  const todosLosElementos = [...new Set(STATE.cuts.flatMap(ct => ct.elementIds || []))];
+  // Solo lo que cuenta como ejecutado: un corte rechazado no suma
+  const todosLosElementos = [...new Set(STATE.cuts.filter(ct => CUT_ESTADOS_EJECUTADOS.has(estadoDeCorte(ct)))
+    .flatMap(ct => ct.elementIds || []))];
   const gGlobal = groupByActivity(todosLosElementos, elById);
   const colEdifG = gGlobal.mostrarEdificacion;
   const consolidadoHtml = gGlobal.rows.map(r => `<tr>
@@ -4931,19 +5416,19 @@ async function exportPDF() {
     </style></head><body>
     <div class="header">
       <div><h1>Bitácora BIM · Reporte de Cortes de Obra</h1>
-      <span class="meta">Generado: ${date} · Total cortes: ${STATE.cuts.length} · Total elementos: ${STATE.elements.length}</span></div>
+      <span class="meta">Generado: ${date} · ${unSoloCorte ? esc(cortes[0].number) : 'Total cortes: ' + cortes.length} · Total elementos: ${STATE.elements.length}</span></div>
     </div>
-    <h2>HISTORIAL DE CORTES</h2>
+    ${unSoloCorte ? '' : `<h2>HISTORIAL DE CORTES</h2>
     <table><thead><tr><th>N° Corte</th><th>Fecha</th><th>Estado</th><th>Nivel</th><th>Actividad</th><th>Elementos</th><th>Cantidad</th><th>Observaciones</th><th>Registrado por</th></tr></thead>
     <tbody>${cutsHtml}</tbody></table>
-    ${STATE.cuts.length ? `<h2>CANTIDADES EJECUTADAS POR ACTIVIDAD <span class="h2sub">(consolidado de todos los cortes)</span></h2>
+    <h2>CANTIDADES EJECUTADAS POR ACTIVIDAD <span class="h2sub">(consolidado de los cortes que cuentan como avance)</span></h2>
       <table class="desglose consolidado">
         <thead><tr>${colEdifG ? '<th class="edif">Edificación</th>' : ''}<th>Actividad</th><th class="num">Elem.</th><th class="qty">Cantidad</th></tr></thead>
-        <tbody>${consolidadoHtml}</tbody></table>` : ''}
-    ${STATE.cuts.length ? '<h2>DETALLE DE CORTES CON VISTA 3D</h2>' + fichasHtml : ''}
-    <h2>CANTIDADES PENDIENTES POR ACTIVIDAD</h2>
+        <tbody>${consolidadoHtml}</tbody></table>`}
+    <h2>${unSoloCorte ? 'DETALLE DEL CORTE' : 'DETALLE DE CORTES CON VISTA 3D'}</h2>${fichasHtml}
+    ${unSoloCorte ? '' : `<h2>CANTIDADES PENDIENTES POR ACTIVIDAD</h2>
     <table class="pend-pdf"><thead><tr>${colEdifP ? '<th class="edif">Edificación</th>' : ''}<th>Actividad</th><th>Nivel</th><th>Unidad</th><th>Total modelo</th><th>Ejecutado</th><th>Pendiente</th><th>% Avance</th></tr></thead>
-    <tbody>${pendHtml}</tbody></table>
+    <tbody>${pendHtml}</tbody></table>`}
     <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script></body></html>`;
 
   win.document.open();
