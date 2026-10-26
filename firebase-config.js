@@ -1,8 +1,9 @@
 // Configuracion web de Firebase. Es publica por diseño: la seguridad la ponen
 // las reglas de Firestore y el inicio de sesion.
-// En localhost se usa el proyecto de pruebas 'demo-eurbe', que solo existe en
-// los emuladores (nube.js se conecta a ellos): las pruebas nunca tocan datos reales.
-window.EURBE_FIREBASE_CONFIG = ['localhost', '127.0.0.1'].includes(location.hostname)
+// En localhost se usa por defecto el proyecto de pruebas 'demo-eurbe', que solo
+// existe en los emuladores (nube.js se conecta a ellos): las pruebas nunca tocan
+// datos reales. Con ?nube=real se usa el real (ver js/entorno-nube.js).
+window.EURBE_FIREBASE_CONFIG = window.EURBE_NUBE.modo === 'emuladores'
   ? { apiKey: 'demo-key', authDomain: 'demo-eurbe.firebaseapp.com', projectId: 'demo-eurbe' }
   : {
       apiKey: 'AIzaSyCcBj2MzswlcQze6FuEMDyQmSPWy29JU_8',
