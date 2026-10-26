@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-const { normalizar, numeroDe, emparejar, normalizarEstado, crearConfirmador, transicionPermitida } =
+const { normalizar, numeroDe, emparejar, normalizarEstado, crearConfirmador, transicionPermitida, estadoDeFiltro } =
   createRequire(import.meta.url)('../../js/agente-voz-logica.js');
 
 const NIVELES = ['Piso 1', 'Piso 2', 'Piso 3', 'Piso 10'];
@@ -123,4 +123,19 @@ test('transiciones de estado iguales a firestore.rules', () => {
 test('un nivel con número que no existe no se ofrece como ambiguo', () => {
   const r = emparejar('piso 9', NIVELES, { nivel: true });
   assert.deepEqual(r, { valores: [], ambiguo: false, candidatos: [] });
+});
+
+test('estado del filtro: pendiente, en corte y estados de pago', () => {
+  assert.equal(estadoDeFiltro('pendiente'), 'pending');
+  assert.equal(estadoDeFiltro('lo que falta'), 'pending');
+  assert.equal(estadoDeFiltro('en corte'), 'cut');
+  assert.equal(estadoDeFiltro('ejecutado'), 'cut');
+  assert.equal(estadoDeFiltro('ejecutada'), 'cut');
+  assert.equal(estadoDeFiltro('pagado'), 'pagado');
+  assert.equal(estadoDeFiltro('lo pagado'), 'pagado');
+  assert.equal(estadoDeFiltro('aprobado'), 'aprobacion');
+  assert.equal(estadoDeFiltro('en aprobación'), 'aprobacion');
+  assert.equal(estadoDeFiltro('en revisión'), 'revision');
+  assert.equal(estadoDeFiltro('todos'), 'all');
+  assert.equal(estadoDeFiltro('azul'), null);
 });

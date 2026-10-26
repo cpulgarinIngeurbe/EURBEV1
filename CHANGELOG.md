@@ -4,6 +4,14 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-10-27 (hora Colombia)
+
+- Filtro «Estado» con estados de pago: además de Pendientes y En cortes registrados,
+  ahora En revisión, En aprobación y Pagado (manual y por voz: «lo pagado de
+  estructura»). Un elemento cuenta con el estado más avanzado de sus cortes.
+- Agente de voz: registra en la consola (F12, filtro `agente-voz`) cada llamada a
+  herramientas. Prompt limpio con la regla de llamar siempre las herramientas.
+
 ## 2026-10-26 13:56 (hora Colombia)
 
 - Agente de voz (ElevenLabs), solo en `desarrollo`: `js/agente-voz.js` y

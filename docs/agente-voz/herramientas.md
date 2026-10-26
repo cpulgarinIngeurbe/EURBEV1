@@ -25,7 +25,7 @@ La página las atiende en `js/agente-voz.js`. Todas devuelven un texto para leer
 | `actividad` | string | Actividad o actividades: "columnas", "columnas y vigas", "mampostería de fachada". |
 | `contrato` | string | Contrato, si la persona lo menciona. |
 | `edificacion` | string | Edificación o torre, si la persona la menciona. |
-| `estado` | string | "pendiente", "en corte" o "todos". |
+| `estado` | string | Estado de los elementos: "pendiente", "en corte" (ejecutado, cualquier estado), "en revisión", "en aprobación", "pagado" o "todos". |
 | `acumular` | boolean | true para sumar este filtro al que ya se ve en vez de reemplazarlo. |
 
 ## 2. `limpiar_filtros`

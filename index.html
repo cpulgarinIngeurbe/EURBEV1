@@ -1069,6 +1069,9 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       <option value="all">Todos</option>
       <option value="pending">Pendientes</option>
       <option value="cut">En cortes registrados</option>
+      <option value="revision">· En revisión</option>
+      <option value="aprobacion">· En aprobación</option>
+      <option value="pagado">· Pagado</option>
     </select>
     <div class="filter-sep"></div>
     <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Limpiar</button>
@@ -3881,6 +3884,8 @@ function applyFilters() {
     let show = encajaHasta(el, valores, CADENA_FILTROS.length);
     if (estado === 'pending' && STATE.cutElements.has(el.globalId)) show = false;
     if (estado === 'cut' && !STATE.cutElements.has(el.globalId)) show = false;
+    // Un estado de pago concreto: el que manda en el elemento (el mas avanzado de sus cortes)
+    if (CUT_ESTADOS[estado] && STATE.cutStateByElement.get(el.globalId) !== estado) show = false;
 
     mesh.visible = show;
     if (show) visibleCount++;

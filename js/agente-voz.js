@@ -70,16 +70,8 @@
     const est = $('f-estado').value;
     if (est === 'pending') partes.push('solo pendientes');
     if (est === 'cut') partes.push('solo en cortes');
+    if (CUT_ESTADOS[est]) partes.push('solo ' + lblEstado(est));
     return partes.join(' · ');
-  }
-
-  function estadoFiltro(t) {
-    const n = L.normalizar(t);
-    if (!n) return null;
-    if (n.includes('pend')) return 'pending';
-    if (n.includes('cort') || n.includes('ejecut') || n.includes('registr')) return 'cut';
-    if (n.includes('tod')) return 'all';
-    return null;
   }
 
   function sincronizarChips() {
@@ -114,8 +106,8 @@
 
   async function filtrar_elementos(p) {
     if (!hayModelo()) return 'No hay ningún modelo cargado todavía.';
-    const estado = p.estado ? estadoFiltro(p.estado) : null;
-    if (p.estado && !estado) return 'El estado puede ser: pendiente, en corte o todos.';
+    const estado = p.estado ? L.estadoDeFiltro(p.estado) : null;
+    if (p.estado && !estado) return 'El estado puede ser: pendiente, en corte, en revisión, en aprobación, pagado o todos.';
     if (!CADENA_FILTROS.some(f => texto(p[f.key])) && !estado)
       return 'Dime qué quieres ver: un nivel, un grupo, una actividad, un contrato o una edificación.';
 

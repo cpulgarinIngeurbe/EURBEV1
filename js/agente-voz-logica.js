@@ -90,6 +90,19 @@
     return null;
   }
 
+  // Valor del desplegable «Estado» (f-estado) a partir de lo dicho: pendiente,
+  // en corte (ejecutado) o un estado de pago concreto
+  function estadoDeFiltro(texto) {
+    const t = normalizar(texto);
+    if (!t) return null;
+    if (t.includes('pend') || t.includes('falta')) return 'pending';
+    const pago = normalizarEstado(t);
+    if (pago && pago !== 'anulado') return pago;
+    if (t.includes('cort') || t.includes('ejecut') || t.includes('registr')) return 'cut';
+    if (t.includes('tod')) return 'all';
+    return null;
+  }
+
   // Una sola accion pendiente a la vez. confirmar() solo devuelve los datos si
   // la clave coincide con lo propuesto y no ha vencido; se consume al usarla.
   function crearConfirmador(ahora = Date.now, vigencia = 120000) {
@@ -115,7 +128,7 @@
         || (de === 'pagado' && a === 'aprobacion' && admin);
   }
 
-  const api = { normalizar, numeroDe, emparejar, normalizarEstado, crearConfirmador, transicionPermitida };
+  const api = { normalizar, numeroDe, emparejar, normalizarEstado, crearConfirmador, transicionPermitida, estadoDeFiltro };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.EurbeAgenteLogica = api;
 })(typeof window !== 'undefined' ? window : globalThis);
