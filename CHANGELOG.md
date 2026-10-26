@@ -19,9 +19,8 @@
   sigue igual.
 - `ui-nube.js`: guarda los entornos de la obra abierta (`SESION.obraEntornos`) y avisa
   al agente al cargar el modelo.
-- Prompt y herramientas para crear el agente: `docs/agente-voz/`. Falta pegar el
-  `agent-id` en `AGENT_ID` de `js/agente-voz.js`; mientras esté vacío no aparece el
-  widget.
+- Prompt y herramientas para crear el agente: `docs/agente-voz/`. Agente conectado:
+  `agent_2601m5w96ccte2cr2zq61jbmhppr` (`AGENT_ID` en `js/agente-voz.js`).
 
 ## 2026-10-26 13:06 (hora Colombia)
 

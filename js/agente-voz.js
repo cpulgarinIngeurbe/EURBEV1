@@ -7,7 +7,7 @@
 // confirmado=true) y, mientras se prueba, solo en obras del entorno «Pruebas».
 (function () {
   // Pegar aqui el agent-id del agente creado en ElevenLabs (docs/agente-voz/)
-  const AGENT_ID = '';
+  const AGENT_ID = 'agent_2601m5w96ccte2cr2zq61jbmhppr';
   const WIDGET_JS = 'https://unpkg.com/@elevenlabs/convai-widget-embed';
 
   const L = window.EurbeAgenteLogica;
@@ -334,7 +334,7 @@
     const b = document.createElement('button');
     b.type = 'button'; b.id = 'btn-cerrar-agente-voz'; b.textContent = '⏹';
     b.title = 'Cerrar sesión del agente de voz';
-    b.style.cssText = 'position:fixed;right:24px;bottom:96px;z-index:9999;width:34px;height:34px;border-radius:50%;' +
+    b.style.cssText = 'position:fixed;right:24px;bottom:150px;z-index:9999;width:34px;height:34px;border-radius:50%;' +
       'border:1px solid #ccd;background:#fff;cursor:pointer;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)';
     b.onclick = () => {
       const viejo = document.querySelector('elevenlabs-convai');

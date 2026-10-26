@@ -278,8 +278,9 @@
   // Gancho llamado por loadModel al terminar de construir la escena
   window.alModeloCargado = function () {
     pintarCabecera();
-    if (window.alModeloCargadoCortes) window.alModeloCargadoCortes();
+    // El agente antes que los cortes: si escuchar cortes falla, el agente igual aparece
     if (window.alModeloCargadoAgente) window.alModeloCargadoAgente();
+    if (window.alModeloCargadoCortes) window.alModeloCargadoCortes();
   };
 
   // ── Cabecera: usuario y menu Obra ──
