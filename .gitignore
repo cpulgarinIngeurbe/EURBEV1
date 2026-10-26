@@ -6,6 +6,8 @@
 !package-lock.json
 !js/package.json
 *.ifc
+# Excepcion: modelo sintetico de la obra de pruebas (scripts/generar_ifc_pruebas.py)
+!pruebas/*.ifc
 *.ifczip
 
 # Respaldos y versiones obsoletas
