@@ -4,6 +4,38 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-11-03 13:53 (hora Colombia) · mejoras traídas de «eurbe 2.html»
+
+- Módulo **Pedidos** de material (pestaña «Pedidos», ya no es maqueta): mampostería,
+  enchape y concreto. Se arma con la selección del visor o con un filtro; agrupa por
+  torre y tipo (o resistencia) y convierte a unidades/pacas, cajas + pegante + mortero
+  o m³. Estados, fecha en obra y «pedir a más tardar», remisiones (dónde se vació),
+  entradas, facturas, revisión de documentos, consumo real de concreto, catálogo de
+  materiales y rendimientos, y Excel del pedido con fórmulas vivas.
+  Por ahora se guarda en el navegador, separado por obra; pasarlo a Firestore es el
+  siguiente paso.
+- Actividades por metro lineal (nombre terminado en «ml»): la cantidad sale de la
+  longitud (horizontal) o la altura (vertical). Se usa en el panel de propiedades,
+  al registrar cortes, pendientes, Excel, PDF, dona de pagos y agente de voz.
+- Contratos: columnas «Unidad detectada» y «Unidad de pago» (editable), total ML,
+  el grupo forma parte de la línea, y Excel nuevo «Memoria de cantidades» (grupo,
+  actividad, unidad de pago, cantidad y vista 3D grande con el resto del edificio en
+  gris de contexto). La lámina muestra la unidad de pago.
+- PDF: se eligen los cortes con casillas (Todos / Ninguno). Cada ficha trae
+  Contratado / A pagar / Acumulado / Pendiente; la vista 3D pinta el corte con el
+  color de su estado y lo pagado en cortes anteriores en gris oscuro.
+- Filtro de Nivel con casillas (varios niveles a la vez); el agente de voz lo usa.
+- Mapeo del parámetro TaskID (opcional) en JSON e IFC.
+- Al cambiar de módulo los colores del visor se restablecen bien.
+- Corregido al traerlo: la lista de cortes del PDF ya no falla al abrir; el aviso de
+  «N con vista 3D» del Excel de Contratos; el contratado del PDF cruza por contrato,
+  edificación, actividad y unidad (antes podía salir en 0 en actividades por ml); la
+  barra de totales de Contratos tiene espacio para la sexta casilla (ML); el total del
+  Excel de Contratos solo se suma si todas las líneas tienen la misma unidad; con
+  «Ninguno» marcado el PDF pide elegir un corte en vez de imprimirlos todos.
+- No se trajeron: filtro «Ejecutados (IFC)», cortes en el navegador ni dibujo pieza
+  por pieza (irían contra la versión en la nube y el rendimiento).
+
 ## 2026-10-27 (hora Colombia) · mejoras traídas de «eurbe 1.html»
 
 - Fondo del visor claro u oscuro (menú 🎨), recordado por navegador; los informes

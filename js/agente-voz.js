@@ -75,7 +75,9 @@
   }
 
   function sincronizarChips() {
-    const nivel = $('f-nivel').value;
+    // Nivel admite varias casillas: el chip solo se marca si hay uno o ninguno
+    const sel = [...MS.nivel.sel];
+    const nivel = sel.length === 1 ? sel[0] : '';
     document.querySelectorAll('.level-chip').forEach(c =>
       c.classList.toggle('active', nivel ? c.textContent === nivel : c.textContent === 'Todos'));
   }
@@ -153,9 +155,10 @@
   function cantidades(els) {
     const porUnidad = {};
     els.forEach(el => {
-      if (el.cantidad == null || isNaN(el.cantidad)) return;
-      const u = el.unidad || 'sin unidad';
-      porUnidad[u] = (porUnidad[u] || 0) + Number(el.cantidad);
+      const q = cantidadLineaElemento(el);
+      if (!q) return;
+      const u = esActividadML(el.actividad) ? 'ml' : (el.unidad || 'sin unidad');
+      porUnidad[u] = (porUnidad[u] || 0) + q;
     });
     return Object.entries(porUnidad).map(([u, v]) => num(v) + ' ' + u).join('; ');
   }

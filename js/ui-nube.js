@@ -280,6 +280,7 @@
     pintarCabecera();
     // El agente antes que los cortes: si escuchar cortes falla, el agente igual aparece
     if (window.alModeloCargadoAgente) window.alModeloCargadoAgente();
+    if (window.alModeloCargadoPedidos) window.alModeloCargadoPedidos();
     if (window.alModeloCargadoCortes) window.alModeloCargadoCortes();
   };
 

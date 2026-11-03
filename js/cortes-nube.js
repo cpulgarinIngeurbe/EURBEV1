@@ -51,7 +51,11 @@
     const ids = [...STATE.selected];
     const els = ids.map(g => STATE.elements.find(e => e.globalId === g)).filter(Boolean);
     const qtyByUnit = {};
-    els.forEach(el => { if (el.cantidad != null) qtyByUnit[el.unidad] = (qtyByUnit[el.unidad] || 0) + el.cantidad; });
+    // En las actividades por ml la cantidad sale de la longitud o la altura
+    els.forEach(el => {
+      const u = esActividadML(el.actividad) ? 'ml' : el.unidad;
+      qtyByUnit[u] = (qtyByUnit[u] || 0) + cantidadLineaElemento(el);
+    });
     const unir = k => [...new Set(els.map(e => e[k]))].filter(Boolean).join(' / ');
     const r = await Nube.registrarCorte(S().obraId, {
       date, notes,

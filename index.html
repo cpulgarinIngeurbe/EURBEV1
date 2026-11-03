@@ -490,7 +490,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); backgroun
   border-top: 2px solid var(--c-accent-dark); color: #2d2d35;
 }
 .ct-totales {
-  display: grid; grid-template-columns: repeat(5, 1fr); flex-shrink: 0;
+  display: grid; grid-template-columns: repeat(6, 1fr); flex-shrink: 0;
   background: #B9D98A; border-top: 1px solid var(--c-accent-dark);
 }
 .ct-totales > div { padding: 7px 12px; min-width: 0; }
@@ -794,6 +794,110 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   opacity: 0; transition: opacity 0.2s; pointer-events: none;
 }
 #notif.show { opacity: 1; }
+/* ═══════════ MÓDULO PEDIDOS ═══════════ */
+#mod-pedidos { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--c-bg2); }
+#mod-pedidos[hidden] { display: none !important; }
+.ped-banda { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #fff;
+  border-bottom: 2px solid var(--c-orange); flex-shrink: 0; }
+.ped-banda-tit { font-weight: 700; font-size: 13px; letter-spacing: .06em; color: #7a3a00; margin-right: 6px; }
+.ped-banda select { height: 30px; border: 1px solid var(--c-border); border-radius: 5px; padding: 0 6px; font-size: 12px; }
+.ped-layout { flex: 1; display: flex; min-height: 0; }
+
+/* Lista */
+.ped-lista { width: 240px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--c-border-light);
+  display: flex; flex-direction: column; min-height: 0; }
+.ped-lista-filtros { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--c-border-light); }
+.ped-lista-filtros select { flex: 1; min-width: 0; height: 26px; font-size: 11px; border: 1px solid var(--c-border); border-radius: 4px; }
+#ped-lista { flex: 1; overflow-y: auto; }
+.ped-card { padding: 9px 11px; border-bottom: 1px solid var(--c-border-light); cursor: pointer; border-left: 3px solid transparent; }
+.ped-card:hover { background: #fff8f0; }
+.ped-card.activo { background: #fff3e8; border-left-color: var(--c-orange); }
+.ped-card-num { font-size: 10px; font-weight: 700; color: var(--c-text2); }
+.ped-card-nom { font-size: 12px; font-weight: 600; color: var(--c-text); margin: 1px 0 3px; }
+.ped-card-fila { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; font-size: 10px; color: var(--c-text2); }
+.ped-chip { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.ped-alerta { color: var(--c-red); font-weight: 700; }
+.ped-vacio { padding: 18px 12px; font-size: 11px; color: var(--c-text2); text-align: center; line-height: 1.5; }
+
+/* Visor */
+.ped-centro { flex: 1; display: flex; flex-direction: column; min-width: 260px; }
+.ped-visor-hd { display: flex; align-items: center; gap: 10px; padding: 5px 10px; background: #fff;
+  border-bottom: 1px solid var(--c-border-light); font-size: 11px; color: var(--c-text2); flex-shrink: 0; flex-wrap: wrap; }
+.ped-ley { display: inline-flex; align-items: center; gap: 4px; }
+.ped-ley i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+#ped-visor { flex: 1; min-height: 160px; position: relative; background: var(--c-visor); display: flex; overflow: hidden; }
+#ped-visor > #viewer-wrap { flex: 1; min-width: 0; min-height: 0; }
+
+/* Detalle */
+.ped-detalle { width: 600px; max-width: 52vw; flex-shrink: 0; background: #fff; border-left: 1px solid var(--c-border-light);
+  display: flex; flex-direction: column; min-height: 0; }
+.ped-det-hd { padding: 10px 14px 0; border-bottom: 1px solid var(--c-border-light); flex-shrink: 0; }
+.ped-det-tit { display: flex; align-items: center; gap: 8px; }
+.ped-det-tit input { flex: 1; font-size: 14px; font-weight: 700; border: 1px solid transparent; border-radius: 4px; padding: 3px 5px; color: var(--c-text); }
+.ped-det-tit input:hover, .ped-det-tit input:focus { border-color: var(--c-border); }
+.ped-det-meta { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px 10px; margin: 8px 0; }
+.ped-det-meta label { display: block; font-size: 9px; font-weight: 700; color: var(--c-text2); text-transform: uppercase; letter-spacing: .04em; }
+.ped-det-meta input, .ped-det-meta select, .ped-det-meta .ped-dato { width: 100%; height: 28px; font-size: 12px;
+  border: 1px solid var(--c-border); border-radius: 4px; padding: 0 6px; background: #fff; }
+.ped-det-meta .ped-dato { display: flex; align-items: center; border-color: transparent; background: var(--c-bg2); font-weight: 600; }
+.ped-tabs { display: flex; gap: 2px; }
+.ped-tab { border: 0; background: none; padding: 7px 12px; font-size: 12px; font-weight: 600; color: var(--c-text2);
+  border-bottom: 2px solid transparent; cursor: pointer; }
+.ped-tab.activo { color: #7a3a00; border-bottom-color: var(--c-orange); }
+.ped-det-cuerpo { flex: 1; overflow-y: auto; padding: 12px 14px 20px; }
+.ped-sec { font-size: 10px; font-weight: 700; color: var(--c-text2); text-transform: uppercase; letter-spacing: .05em;
+  margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1px solid var(--c-border-light); display: flex; align-items: center; gap: 6px; }
+.ped-sec:first-child { margin-top: 0; }
+.ped-caja { background: var(--c-bg2); border-radius: 6px; padding: 8px 10px; font-size: 11px; }
+.ped-fila { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.ped-fila select, .ped-fila input { height: 28px; font-size: 12px; border: 1px solid var(--c-border); border-radius: 4px; padding: 0 6px; background: #fff; }
+.ped-fila label { font-size: 11px; color: var(--c-text2); }
+.ped-ayuda { font-size: 11px; color: var(--c-text2); line-height: 1.45; }
+
+/* Tablas */
+.ped-tabla-wrap { overflow-x: auto; }
+.ped-tabla { width: 100%; border-collapse: collapse; font-size: 11px; }
+.ped-tabla th { background: #f3f3f5; font-size: 9px; text-transform: uppercase; letter-spacing: .03em; color: var(--c-text2);
+  padding: 5px 5px; text-align: left; border-bottom: 1px solid var(--c-border); white-space: nowrap; }
+.ped-tabla th.n, .ped-tabla td.n { text-align: right; }
+.ped-tabla td { padding: 4px 5px; border-bottom: 1px solid var(--c-border-light); vertical-align: middle; }
+.ped-tabla td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ped-tabla td.fuerte { font-weight: 700; color: #b35a00; }
+.ped-tabla tr.ped-torre td { background: #fff4ea; font-weight: 700; font-size: 10px; color: #7a3a00; letter-spacing: .04em; }
+.ped-tabla tr.ped-tot td { border-top: 2px solid var(--c-orange); font-weight: 700; background: #fffaf5; }
+.ped-tabla input[type=number], .ped-tabla input[type=text], .ped-tabla input[type=date], .ped-tabla select {
+  height: 24px; font-size: 11px; border: 1px solid var(--c-border); border-radius: 3px; padding: 0 4px; background: #fff; }
+.ped-tabla input[type=number] { width: 62px; text-align: right; }
+.ped-tabla input.corto { width: 50px; }
+.ped-tabla input.largo { width: 110px; }
+.ped-tabla select { max-width: 150px; }
+.ped-tipo { font-size: 10px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ped-x { border: 0; background: none; color: var(--c-text3); cursor: pointer; font-size: 13px; padding: 0 3px; }
+.ped-x:hover { color: var(--c-red); }
+.ped-mini { border: 1px solid var(--c-border); background: #fff; border-radius: 3px; font-size: 10px; padding: 2px 6px; cursor: pointer; white-space: nowrap; }
+.ped-mini:hover { background: var(--c-bg2); }
+.ped-pos { color: #2d7a40; } .ped-neg { color: var(--c-red); }
+
+/* Avisos y resumen de consumo */
+.ped-avisos { border: 1px solid #f3d9a8; background: #fffaf0; border-radius: 6px; padding: 8px 10px; font-size: 11px; }
+.ped-avisos div { padding: 2px 0; }
+.ped-avisos.ok { border-color: #cfe9d8; background: #f4fbf6; color: #2d7a40; }
+.ped-kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.ped-kpi { background: var(--c-bg2); border-radius: 6px; padding: 7px 9px; }
+.ped-kpi b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ped-kpi span { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--c-text2); font-weight: 700; }
+.ped-maqueta { border: 1px dashed var(--c-border); border-radius: 6px; padding: 8px 10px; font-size: 11px; color: var(--c-text2); background: #fafafa; }
+.ped-maqueta b { color: var(--c-text); }
+
+/* Catálogo de materiales (ventana) */
+#ped-cat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 600; display: flex; align-items: center; justify-content: center; }
+#ped-cat-overlay[hidden] { display: none !important; }
+.ped-cat-box { background: #fff; border-radius: 10px; width: 1100px; max-width: 96vw; max-height: 90vh; display: flex; flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.ped-cat-hd { padding: 14px 18px 8px; border-bottom: 1px solid var(--c-border-light); }
+.ped-cat-hd h3 { font-size: 15px; margin-bottom: 4px; }
+.ped-cat-cuerpo { padding: 10px 18px; overflow-y: auto; flex: 1; }
+.ped-cat-pie { padding: 10px 18px; border-top: 1px solid var(--c-border-light); display: flex; gap: 8px; justify-content: flex-end; }
 
 /* ── Nube: pantallas de entrada/obra y cabecera ── */
 .nube-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -903,6 +1007,10 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       <select id="map-keynote"></select>
     </div>
     <div class="mapping-row">
+      <div class="mlabel">TaskID<small>Tarea de la programación (opcional)</small></div>
+      <select id="map-taskId"></select>
+    </div>
+    <div class="mapping-row">
       <div class="mlabel">Contrato<small>Agrupa el alcance contratado (opcional)</small></div>
       <select id="map-contrato"></select>
     </div>
@@ -970,7 +1078,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
       <button type="button" class="mod-tab" id="mtab-contratos" onclick="setModulo('contratos')">Contratos</button>
       <button type="button" class="mod-tab activo" id="mtab-cortes" onclick="setModulo('cortes')">Cortes de obra</button>
       <button type="button" class="mod-tab maqueta" onclick="avisoMaqueta('Modelo de control')">Modelo de control</button>
-      <button type="button" class="mod-tab maqueta" onclick="avisoMaqueta('Pedidos')">Pedidos</button>
+      <button type="button" class="mod-tab" id="mtab-pedidos" onclick="setModulo('pedidos')">Pedidos</button>
     </div>
     <div class="project-name">
       <strong id="project-name">Modelo BIM</strong>
@@ -1034,6 +1142,7 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
                 <th>Descripción de la actividad</th><th>Sentido lineal</th>
                 <th class="num">Área m²</th><th class="num">Volumen m³</th>
                 <th class="num">Longitud m</th><th class="num">Altura m</th>
+                <th>Unidad detectada</th><th>Unidad de pago</th>
                 <th class="num">Unidades</th><th>Type_Keynote</th>
               </tr></thead>
               <tbody id="ct-tbody"></tbody>
@@ -1059,9 +1168,20 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     </select>
     <div class="filter-sep"></div>
     <label>Nivel</label>
-    <select id="f-nivel" onchange="applyFilters()">
-      <option value="">Todos</option>
-    </select>
+    <div class="ms" id="ms-nivel">
+      <button type="button" class="ms-btn" onclick="msToggle('nivel', event)">
+        <span class="ms-txt">Todos</span><span class="ms-caret">▾</span>
+      </button>
+      <div class="ms-panel" hidden>
+        <input type="text" class="ms-search" placeholder="Buscar nivel…" oninput="msRender('nivel')">
+        <div class="ms-acciones">
+          <button type="button" onclick="msTodos('nivel', true)">Todos</button>
+          <button type="button" onclick="msTodos('nivel', false)">Ninguno</button>
+          <span class="ms-cuenta"></span>
+        </div>
+        <div class="ms-lista"></div>
+      </div>
+    </div>
     <div class="filter-sep"></div>
     <label>Grupo</label>
     <div class="ms" id="ms-grupo">
@@ -1361,6 +1481,70 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     </div><!-- /right-panel -->
   </div><!-- /main -->
   </div><!-- /mod-cortes -->
+
+  <!-- ════════ MÓDULO: PEDIDOS DE MATERIAL ════════ -->
+  <div id="mod-pedidos" hidden>
+    <div class="ped-banda">
+      <span class="ped-banda-tit">PEDIDOS</span>
+      <select id="ped-nuevo-clase" title="Material del pedido nuevo">
+        <option value="mamposteria">🧱 Mampostería</option>
+        <option value="enchape">◫ Enchape</option>
+        <option value="concreto">⬛ Concreto</option>
+      </select>
+      <button type="button" class="btn btn-primary btn-sm" onclick="pedNuevo()">+ Nuevo pedido</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="pedAbrirCatalogo()">⚙ Materiales y rendimientos</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn btn-secondary btn-sm" id="ped-btn-excel" onclick="pedExportarExcel()" disabled>↓ Excel del pedido</button>
+    </div>
+    <div class="ped-layout">
+      <div class="ped-lista">
+        <div class="ped-lista-filtros">
+          <select id="ped-fl-clase" onchange="pedRenderLista()">
+            <option value="">Todos los materiales</option>
+            <option value="mamposteria">Mampostería</option>
+            <option value="enchape">Enchape</option>
+            <option value="concreto">Concreto</option>
+          </select>
+          <select id="ped-fl-estado" onchange="pedRenderLista()">
+            <option value="">Todos</option>
+            <option value="solicitado">Solicitado</option>
+            <option value="aprobado">Aprobado</option>
+            <option value="entregado">Entregado</option>
+          </select>
+        </div>
+        <div id="ped-lista"></div>
+      </div>
+      <div class="ped-centro">
+        <div class="ped-visor-hd" id="ped-visor-hd">
+          <span class="ped-ley"><i style="background:#F5892A"></i>Este pedido</span>
+          <span class="ped-ley"><i style="background:#9B87C9"></i>Ya pedido en otro</span>
+          <span class="ped-ley"><i style="background:#3A7FC1"></i>Vaciado (remisión)</span>
+          <span class="ped-ley"><i style="background:#BEDD81"></i>Seleccionado</span>
+          <span style="flex:1"></span>
+          <span id="ped-sel-info">0 seleccionados</span>
+        </div>
+        <div id="ped-visor"></div>
+      </div>
+      <div class="ped-detalle" id="ped-detalle"></div>
+    </div>
+
+    <div id="ped-cat-overlay" hidden>
+      <div class="ped-cat-box">
+        <div class="ped-cat-hd">
+          <h3>Materiales y rendimientos</h3>
+          <p class="ped-ayuda">Se configuran una vez y cada pedido los trae solos. En un pedido puntual se pueden ajustar sin cambiar este catálogo.
+            <b>Busca en el tipo</b> es el texto que debe aparecer en el tipo de familia del modelo (o en la resistencia, para concreto) para proponer el material automáticamente.
+            El <b>factor de desperdicio</b> se escribe como multiplicador: 1,05 = 5 %; 1,15 = 15 %.</p>
+        </div>
+        <div class="ped-cat-cuerpo" id="ped-cat-cuerpo"></div>
+        <div class="ped-cat-pie">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pedCatRestaurar()">Restaurar valores de ejemplo</button>
+          <span style="flex:1"></span>
+          <button type="button" class="btn btn-primary btn-sm" onclick="pedCerrarCatalogo()">Listo</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="notif"></div>
@@ -1392,8 +1576,12 @@ table.pend-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         </div>
       </div>
       <div class="pdf-opts" id="pdf-opts" hidden>
-        <label for="pdf-corte">¿Qué quieres imprimir?</label>
-        <select id="pdf-corte"><option value="">Todos los cortes</option></select>
+        <label>¿Qué cortes quieres imprimir?</label>
+        <div style="margin:4px 0 2px;display:flex;gap:8px;align-items:center">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="pdfSelTodos(true)">Todos</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="pdfSelTodos(false)">Ninguno</button>
+        </div>
+        <div id="pdf-corte-lista" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:4px;padding:6px 8px;margin-top:4px;display:flex;flex-direction:column;gap:3px"></div>
         <p class="pdf-nota" id="pdf-nota"></p>
         <button type="button" class="btn btn-primary btn-sm" onclick="exportPDF()">🖨️ Generar PDF</button>
       </div>
@@ -1498,6 +1686,7 @@ const CT = {
   niveles: new Set(),
   abiertos: new Set(),      // grupos desplegados en el árbol
   opc: { 1:{param:'', vals:new Set()}, 2:{param:'', vals:new Set()} },
+  unidadesPago: {},        // clave de la línea -> unidad de pago elegida
 };
 let moduloActivo = 'cortes';
 
@@ -1515,14 +1704,18 @@ function setModulo(m) {
   moduloActivo = m;
   document.getElementById('mtab-cortes').classList.toggle('activo', m === 'cortes');
   document.getElementById('mtab-contratos').classList.toggle('activo', m === 'contratos');
+  document.getElementById('mtab-pedidos').classList.toggle('activo', m === 'pedidos');
   document.getElementById('mod-cortes').hidden    = m !== 'cortes';
   document.getElementById('mod-contratos').hidden = m !== 'contratos';
+  document.getElementById('mod-pedidos').hidden   = m !== 'pedidos';
 
   // Un solo visor que se muda de módulo. Se comprobó que el contexto WebGL
   // sobrevive al cambio de padre; solo hay que redimensionar después.
   const visor = document.getElementById('viewer-wrap');
   const destino = m === 'contratos'
     ? document.getElementById('ct-visor')
+    : m === 'pedidos'
+    ? document.getElementById('ped-visor')
     : document.getElementById('main');
   if (visor && destino && visor.parentElement !== destino) {
     if (m === 'cortes') destino.insertBefore(visor, destino.firstChild);
@@ -1537,7 +1730,9 @@ function setModulo(m) {
     if (e) e.style.display = soloCortes;
   });
 
+  refreshAllColors();                       // salir de Pedidos devuelve los colores de cortes
   if (m === 'contratos') { ctConstruirFiltros(); ctAplicar(); }
+  else if (m === 'pedidos') { pedAlEntrar(); }
   else { applyFilters(); }
   setTimeout(redimensionarVisor, 30);
 }
@@ -1630,8 +1825,8 @@ function ctConstruirFiltros() {
       <div class="ct-hijos" ${abierto ? '' : 'hidden'}>
         ${acts.map(([a,n]) => `<label class="ct-op">
           <input type="checkbox" ${CT.actividades.has(g + '\u0000' + a) ? 'checked' : ''}
-                 onchange="ctMarcarActividad('${ctEsc(g)}', this.dataset.a, this.checked)"
-                 data-a="${ctEsc(a)}">
+                 onchange="ctMarcarActividad(this.dataset.g, this.dataset.a, this.checked)"
+                 data-g="${ctEsc(g)}" data-a="${ctEsc(a)}">
           <span>${ctEsc(a)}</span><span class="ct-cuenta">${n}</span></label>`).join('')}
       </div></div>`;
   }).join('') : '<div class="ct-vacio">Sin grupos de contrato para esta selección.</div>';
@@ -1774,9 +1969,29 @@ const ctEnt = n => n ? n.toLocaleString('es-CO') : '—';
 // Las filas se agrupan por actividad + sentido lineal + Type_Keynote, que es
 // como se desglosa la solicitud: una misma actividad aparece varias veces si
 // cambia su sentido o su código de ítem.
+// Actividades que se pagan por metro lineal: su nombre termina en «ml»
+function esActividadML(act) { return /ml\s*$/i.test(String(act || '').trim()); }
+
+// Cantidad de un elemento: en las actividades por ml sale de la longitud
+// (sentido horizontal) o de la altura (vertical); en las demás, la guardada.
+function cantidadLineaElemento(el) {
+  const almacenada = ctNum(el.cantidad);
+  if (!esActividadML(el.actividad)) return almacenada;
+  const sentido = String(el.sentido || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (/horizontal|\bh\b/.test(sentido)) return ctNum(el.longitud);
+  if (/vertical|\bv\b/.test(sentido)) return ctNum(el.altura);
+  return almacenada;
+}
+
+function ctClaveUnidad(r) { return [r.grupo || '', r.actividad || '', r.sentido || '', r.keynote || ''].join('\u0000'); }
+function ctCambiarUnidadPago(claveCodificada, unidad) {
+  CT.unidadesPago[decodeURIComponent(claveCodificada)] = unidad;
+  ctAplicar();
+}
+
 function ctFilas() {
   const filas = new Map();
-  const tot = { area:0, volumen:0, longitud:0, altura:0, und:0 };
+  const tot = { area:0, volumen:0, longitud:0, altura:0, ml:0, und:0 };
   let visibles = 0;
 
   for (const el of STATE.elements) {
@@ -1786,21 +2001,34 @@ function ctFilas() {
     if (!dentro) continue;
     visibles++;
 
-    const act = el.actividad || '', sen = el.sentido || '', kn = el.keynote || '';
-    const k = act + '\u0000' + sen + '\u0000' + kn;
+    const grupo = el.descGrupo || '', act = el.actividad || '', sen = el.sentido || '', kn = el.keynote || '';
+    const k = grupo + '\u0000' + act + '\u0000' + sen + '\u0000' + kn;
     let f = filas.get(k);
     if (!f) {
-      f = { grupo: el.descGrupo || '', actividad: act, sentido: sen, keynote: kn,
-            area:0, volumen:0, longitud:0, altura:0, und:0 };
+      f = { grupo: grupo, actividad: act, sentido: sen, keynote: kn,
+            area:0, volumen:0, longitud:0, altura:0, ml:0, und:0, unidades: {} };
       filas.set(k, f);
     }
     f.area += ctNum(el.area);         f.volumen += ctNum(el.volumen);
     f.longitud += ctNum(el.longitud); f.altura += ctNum(el.altura); f.und++;
+    const unidadElemento = String(el.unidad || '').trim();
+    if (unidadElemento) f.unidades[unidadElemento] = (f.unidades[unidadElemento] || 0) + 1;
+    f.ml += esActividadML(act) ? cantidadLineaElemento(el) : 0;
     tot.area += ctNum(el.area);       tot.volumen += ctNum(el.volumen);
     tot.longitud += ctNum(el.longitud); tot.altura += ctNum(el.altura); tot.und++;
+    tot.ml += esActividadML(act) ? cantidadLineaElemento(el) : 0;
   }
 
-  const rows = [...filas.values()].sort((a,b) =>
+  invalidarAristas();
+
+  const rows = [...filas.values()].map(r => {
+    const unidades = Object.entries(r.unidades).sort((a,b) => b[1] - a[1]);
+    r.unidadDetectada = esActividadML(r.actividad) ? 'ml'
+      : (unidades[0] ? unidades[0][0] : (r.area ? 'm²' : r.volumen ? 'm³' : r.longitud ? 'm' : r.altura ? 'm' : 'und'));
+    r.unidadPago = CT.unidadesPago[ctClaveUnidad(r)] || r.unidadDetectada;
+    return r;
+  }).sort((a,b) =>
+    a.grupo.localeCompare(b.grupo,'es') ||
     a.actividad.localeCompare(b.actividad,'es') ||
     a.sentido.localeCompare(b.sentido,'es') ||
     a.keynote.localeCompare(b.keynote,'es'));
@@ -1854,17 +2082,21 @@ function ctAplicar() {
         <td class="num">${ctFmt(r.volumen)}</td>
         <td class="num">${ctFmt(r.longitud)}</td>
         <td class="num">${ctFmt(r.altura)}</td>
+        <td class="tipo">${ctEsc(r.unidadDetectada)}</td>
+        <td><select aria-label="Unidad de pago" onchange="ctCambiarUnidadPago(this.dataset.clave,this.value)" data-clave="${encodeURIComponent(ctClaveUnidad(r))}">
+          ${[...new Set([r.unidadDetectada, r.unidadPago, 'und', 'm', 'ml', 'm²', 'm³', 'kg', 'gl'])].filter(Boolean).map(u => `<option value="${ctEsc(u)}" ${r.unidadPago === u ? 'selected' : ''}>${ctEsc(u)}</option>`).join('')}
+        </select></td>
         <td class="num">${ctEnt(r.und)}</td>
         <td class="tipo">${ctEsc(r.keynote) || '—'}</td>
       </tr>`).join('')
-    : '<tr><td colspan="8" style="text-align:center;color:var(--c-text3);padding:22px">'
+    : '<tr><td colspan="10" style="text-align:center;color:var(--c-text3);padding:22px">'
       + 'Ningún elemento cumple el filtro.</td></tr>';
 
   document.getElementById('ct-tfoot').innerHTML = rows.length
     ? `<tr><td colspan="2">TOTAL</td>
        <td class="num">${ctFmt(tot.area)}</td><td class="num">${ctFmt(tot.volumen)}</td>
        <td class="num">${ctFmt(tot.longitud)}</td><td class="num">${ctFmt(tot.altura)}</td>
-       <td class="num">${ctEnt(tot.und)}</td><td></td></tr>` : '';
+       <td></td><td></td><td class="num">${ctEnt(tot.und)}</td><td></td></tr>` : '';
 
   document.getElementById('ct-tabla-meta').textContent =
     `${rows.length} línea${rows.length===1?'':'s'} · ${visibles.toLocaleString('es-CO')} elementos`;
@@ -1872,7 +2104,7 @@ function ctAplicar() {
   document.getElementById('ct-totales').innerHTML = [
     ['Área m²', ctFmt(tot.area)], ['Volumen m³', ctFmt(tot.volumen)],
     ['Longitud m', ctFmt(tot.longitud)], ['Altura m', ctFmt(tot.altura)],
-    ['Und', ctEnt(tot.und)],
+    ['ML', ctFmt(tot.ml)], ['Und', ctEnt(tot.und)],
   ].map(([l,v]) => `<div><div class="tt-lbl">${l}</div><div class="tt-val">${v}</div></div>`).join('');
 
   const nAct = CT.actividades.size, nNiv = CT.niveles.size;
@@ -1892,10 +2124,11 @@ function ctAplicar() {
 // Para cada línea de la solicitud se aísla su geometría y se fotografía el
 // visor. Misma técnica que las vistas de los cortes en el PDF.
 async function ctCapturarMiniaturas(rows, onProgreso) {
-  const imgs = new Array(rows.length).fill(null);
+  // Devuelve Map(clave → base64) para que ctExportar busque por clave, no por índice
+  const imgs = new Map();
   if (!renderer || !scene || !camera || !rows.length) return imgs;
 
-  const ANCHO = 760, ALTO = 430;
+  const ANCHO = 920, ALTO = 520;
   const wrap = document.getElementById('viewer-wrap');
   const grids = scene.children.filter(o => o.isGridHelper || o.type === 'GridHelper');
   const guardado = {
@@ -1909,11 +2142,12 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
     guardado.mats[gid] = { color: m.material.color.getHex(), visible: m.visible };
   });
 
-  // Índice fila -> elementos, con la misma clave que usa ctFilas
+  // La clave incluye el grupo: dos actividades iguales de grupos distintos
+  // deben capturarse y exportarse como filas independientes.
   const porFila = new Map();
   for (const el of STATE.elements) {
     if (!ctIncluye(el)) continue;
-    const k = (el.actividad||'') + '\u0000' + (el.sentido||'') + '\u0000' + (el.keynote||'');
+    const k = (el.descGrupo||'') + '\u0000' + (el.actividad||'') + '\u0000' + (el.sentido||'') + '\u0000' + (el.keynote||'');
     if (!porFila.has(k)) porFila.set(k, []);
     porFila.get(k).push(el.globalId);
   }
@@ -1923,7 +2157,8 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
   try {
     scene.fog = null;
     grids.forEach(g => g.visible = false);
-    // Fondo claro tambien en las miniaturas: el Excel se mira e imprime en blanco
+    // Fondo claro también en las miniaturas, para que el Excel sea coherente
+    // con el visor y además imprima mejor
     renderer.setClearColor(0xF4F5F7);
     renderer.setPixelRatio(1);
     renderer.setSize(ANCHO, ALTO, false);
@@ -1931,7 +2166,7 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const k = r.actividad + '\u0000' + r.sentido + '\u0000' + r.keynote;
+      const k = r.grupo + '\u0000' + r.actividad + '\u0000' + r.sentido + '\u0000' + r.keynote;
       const gids = new Set(porFila.get(k) || []);
       if (!gids.size) continue;
 
@@ -1940,8 +2175,19 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
       for (const gid in STATE.meshes) {
         const m = STATE.meshes[gid]; if (!m) continue;
         const dentro = gids.has(gid);
-        m.visible = dentro;
-        if (dentro) { m.material.color.setHex(0x16B85F); caja.expandByObject(m); hay++; }
+        m.visible = true;
+        if (dentro) {
+          const colorActividad = ACTIVITY_COLORS[r.actividad];
+          m.material.color.setHex(typeof colorActividad === 'number' ? colorActividad : 0xAAAAAA);
+          caja.expandByObject(m); hay++;
+        } else {
+          // Resto de la estructura: contexto en gris muy claro
+          m.material.color.setHex(0xECEFF4);
+          m.material.transparent = true;
+          m.material.opacity = 0.55;
+          m.material.depthWrite = false;
+          m.renderOrder = 0;
+        }
       }
       if (!hay || caja.isEmpty()) continue;
 
@@ -1955,8 +2201,8 @@ async function ctCapturarMiniaturas(rows, onProgreso) {
       // animate() no corre durante la captura: el contorno se recompacta aqui
       refrescarAristas(gid => gids.has(gid));
       renderer.render(scene, camera);
-      try { imgs[i] = ctComponerLamina(renderer.domElement, r); }
-      catch(e) { imgs[i] = null; }
+      try { imgs.set(k, ctComponerLamina(renderer.domElement, r)); }
+      catch(e) { /* skip */ }
 
       if (onProgreso) onProgreso(i + 1, rows.length);
       await new Promise(r2 => setTimeout(r2, 0));
@@ -1994,10 +2240,12 @@ function ctComponerLamina(lienzo3D, fila) {
   cv.width = W; cv.height = lienzo3D.height + CAB + PIE;
   const x = cv.getContext('2d');
 
+  // Cabecera
   x.fillStyle = '#17211D'; x.fillRect(0, 0, W, CAB);
   x.fillStyle = '#42D67A';
   x.font = 'bold 11px "Segoe UI", sans-serif';
   x.fillText('SOLICITUD DE CONTRATO', 14, 19);
+
   const recorta = (t, max) => {
     t = String(t || '—');
     if (x.measureText(t).width <= max) return t;
@@ -2012,15 +2260,21 @@ function ctComponerLamina(lienzo3D, fila) {
   x.font = 'bold 12px "Segoe UI", sans-serif';
   x.fillText(recorta(fila.grupo, W - 90), 72, 38);
   x.fillText(recorta(fila.actividad, W - 90), 72, 58);
+  x.fillStyle = '#FFFFFF'; x.font = 'bold 10px "Segoe UI", sans-serif';
+  x.fillText('Unidad de pago: ' + (fila.unidadPago || fila.unidadDetectada || 'und'), W - 170, 19);
 
+  // El render
   x.drawImage(lienzo3D, 0, CAB);
 
+  // Pie con las cantidades
   const y0 = CAB + lienzo3D.height;
   x.fillStyle = '#B9D98A'; x.fillRect(0, y0, W, PIE);
   const datos = [
-    ['ÁREA m²', ctFmt(fila.area)], ['VOLUMEN m³', ctFmt(fila.volumen)],
-    ['LONGITUD m', ctFmt(fila.longitud)], ['ALTURA m', ctFmt(fila.altura)],
-    ['UND', ctEnt(fila.und)],
+    ['ÁREA m²',   ctFmt(fila.area)],
+    ['VOLUMEN m³', ctFmt(fila.volumen)],
+    ['LONGITUD m', ctFmt(fila.longitud)],
+    ['ALTURA m',  ctFmt(fila.altura)],
+    ['UND',       ctEnt(fila.und)],
   ];
   const anc = W / datos.length;
   datos.forEach(([lbl, val], i) => {
@@ -2032,6 +2286,7 @@ function ctComponerLamina(lienzo3D, fila) {
     x.fillStyle = '#1F2B16'; x.font = 'bold 13px "Segoe UI", sans-serif';
     x.fillText(val, cx, y0 + 34);
   });
+
   if (fila.keynote) {
     x.fillStyle = 'rgba(23,33,29,0.75)';
     x.fillRect(W - 112, CAB + 8, 104, 20);
@@ -2058,7 +2313,11 @@ async function ctExportar() {
   }
 
   setStatusBar(`Generando vistas 3D: 0 de ${rows.length}…`);
-  const imgs = await ctCapturarMiniaturas(rows, (n, total) => {
+  const rowsOrdenadasCaptura = [...rows].sort((a,b) =>
+    a.grupo.localeCompare(b.grupo,'es') || a.actividad.localeCompare(b.actividad,'es') ||
+    a.sentido.localeCompare(b.sentido,'es') || a.keynote.localeCompare(b.keynote,'es'));
+  // imgs es Map(clave → base64); clave = grupo\0actividad\0sentido\0keynote
+  const imgs = await ctCapturarMiniaturas(rowsOrdenadasCaptura, (n, total) => {
     setStatusBar(`Generando vistas 3D: ${n} de ${total}…`);
   });
 
@@ -2069,43 +2328,81 @@ async function ctExportar() {
   const ws = wb.addWorksheet('Solicitud de contrato');
 
   ws.columns = [
-    { header: 'Grupo de contrato',          key: 'g',   width: 30 },
-    { header: 'Descripción de la actividad',key: 'a',   width: 46 },
-    { header: 'Sentido lineal',             key: 's',   width: 15 },
-    { header: 'Área m²',                    key: 'ar',  width: 13 },
-    { header: 'Volumen m³',                 key: 'vo',  width: 13 },
-    { header: 'Longitud m',                 key: 'lo',  width: 13 },
-    { header: 'Altura m',                   key: 'al',  width: 13 },
-    { header: 'Unidades',                   key: 'un',  width: 10 },
-    { header: 'Type_Keynote',               key: 'kn',  width: 16 },
-    { header: 'Memoria gráfica',            key: 'im',  width: 62 },
+    { key: 'g',  width: 24 }, { key: 'a',  width: 42 },
+    { key: 'up', width: 14 }, { key: 'ca', width: 14 }, { key: 'im', width: 90 }
   ];
 
-  const cab = ws.getRow(1);
+  const nombreModelo = (document.getElementById('project-name') || {}).textContent.trim()
+    || 'Modelo BIM';
+  const fechaExportacion = new Date();
+  const fechaTexto = fechaExportacion.toLocaleDateString('es-CO', {
+    day:'2-digit', month:'2-digit', year:'numeric'
+  });
+
+  ws.mergeCells('A1:E1');
+  ws.getCell('A1').value = 'MEMORIA DE CANTIDADES';
+  ws.getCell('A1').fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF99C73D' } };
+  ws.getCell('A1').font = { bold:true, color:{ argb:'FFFFFFFF' }, size:14 };
+  ws.getCell('A1').alignment = { horizontal:'center', vertical:'middle' };
+  ws.getRow(1).height = 28;
+
+  ws.getCell('A2').value = 'Modelo:';
+  ws.getCell('B2').value = nombreModelo;
+  ws.getCell('D2').value = 'Fecha de exportación:';
+  ws.getCell('E2').value = fechaTexto;
+  ws.getRow(2).font = { bold:true, color:{ argb:'FF4D5A36' } };
+  ws.mergeCells('B2:C2');
+
+  const cab = ws.addRow(['Grupo de contrato', 'Descripción de la actividad',
+                         'Unidad de pago', 'Cantidad', 'Memoria gráfica']);
   cab.font = { bold: true, color: { argb: 'FF1F2B16' } };
   cab.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFB9D98A' } };
   cab.alignment = { vertical: 'middle' };
   cab.height = 22;
 
   // La imagen va mucho mayor: era ilegible al tamaño anterior
-  const IMG_W = 420, IMG_H = 304, ALTO_FILA = IMG_H * 0.76;
-  rows.forEach((r, i) => {
-    const fila = ws.addRow({ g: r.grupo, a: r.actividad, s: r.sentido,
-      ar: r2(r.area), vo: r2(r.volumen), lo: r2(r.longitud), al: r2(r.altura),
-      un: r.und, kn: r.keynote, im: '' });
+  const IMG_W = 620, IMG_H = 620;
+  const ctCantidadPago = r => {
+    const unidad = String(r.unidadPago || r.unidadDetectada || '').toLowerCase();
+    if (unidad === 'm²' || unidad === 'm2') return r.area;
+    if (unidad === 'm³' || unidad === 'm3') return r.volumen;
+    if (unidad === 'ml') return r.ml;
+    if (unidad === 'm') return r.longitud + r.altura;
+    if (unidad === 'und') return r.und;
+    return r.area || r.volumen || r.ml || r.longitud || r.altura || r.und;
+  };
+  const ALTO_FILA = Math.round(IMG_H * 0.9);  // ~522 pts ≈ altura de la imagen
+  const rowsOrdenadas = [...rows].sort((a,b) =>
+    a.grupo.localeCompare(b.grupo,'es') || a.actividad.localeCompare(b.actividad,'es') ||
+    a.sentido.localeCompare(b.sentido,'es') || a.keynote.localeCompare(b.keynote,'es'));
+  let grupoAnterior = null;
+  rowsOrdenadas.forEach((r) => {
+    const unidadPago = r.unidadPago || r.unidadDetectada || 'und';
+    const fila = ws.addRow({ g: r.grupo, a: r.actividad,
+      up: unidadPago, ca: r2(ctCantidadPago(r)), im: '' });
     fila.alignment = { vertical: 'top', wrapText: true };
-    if (imgs[i]) {
+    if (r.grupo !== grupoAnterior) {
+      fila.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5E8' } };
+        cell.border = { top: { style: 'medium', color: { argb: 'FF9DCB3B' } } };
+      });
+      grupoAnterior = r.grupo;
+    }
+    // Buscar imagen por clave, no por índice → elimina el bug de grupos combinados
+    const imgKey = r.grupo + '\u0000' + r.actividad + '\u0000' + r.sentido + '\u0000' + r.keynote;
+    const imgB64 = imgs.get(imgKey);
+    if (imgB64) {
       fila.height = ALTO_FILA;
-      const id = wb.addImage({ base64: imgs[i], extension: 'jpeg' });
-      // La columna de imagen es la décima, índice 9 en base cero
-      ws.addImage(id, { tl: { col: 9.08, row: fila.number - 0.92 },
+      const id = wb.addImage({ base64: imgB64, extension: 'jpeg' });
+      ws.addImage(id, { tl: { col: 4.08, row: fila.number - 0.92 },
                         ext: { width: IMG_W, height: IMG_H } });
     }
   });
 
   const vacia = ws.addRow({});
-  const fTot = ws.addRow({ g: 'TOTAL', ar: r2(tot.area), vo: r2(tot.volumen),
-    lo: r2(tot.longitud), al: r2(tot.altura), un: tot.und });
+  const unidadesTot = new Set(rowsOrdenadas.map(r => r.unidadPago || r.unidadDetectada || 'und'));
+  const fTot = ws.addRow({ g: 'TOTAL', up: unidadesTot.size === 1 ? [...unidadesTot][0] : 'varias unidades',
+    ca: unidadesTot.size === 1 ? r2(rowsOrdenadas.reduce((s, r) => s + ctCantidadPago(r), 0)) : null });
   fTot.font = { bold: true };
   fTot.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F7E6' } };
 
@@ -2117,16 +2414,16 @@ async function ctExportar() {
   ];
   [1,2].forEach(i => { const o = CT.opc[i];
     if (o.param && o.vals.size) meta.push([o.param + ':', [...o.vals].join(', ')]); });
-  meta.push(['Modelo:', (document.getElementById('project-name') || {}).textContent || '']);
-  meta.push(['Generado:', new Date().toISOString().slice(0,10).replace(/-/g,'/')]);
+  meta.push(['Modelo:', nombreModelo]);
+  meta.push(['Fecha de exportación:', fechaTexto]);
   meta.forEach(([k,v]) => {
     const f = ws.addRow({ g: k, a: String(v) });
     f.getCell(1).font = { bold: true, color: { argb: 'FF6B6B7A' } };
   });
 
   // Números con dos decimales, como en el resto de la aplicación
-  ['D','E','F','G'].forEach(col => { ws.getColumn(col).numFmt = '#,##0.00'; });
-  ws.views = [{ state: 'frozen', ySplit: 1 }];
+  ['D'].forEach(col => { ws.getColumn(col).numFmt = '#,##0.00'; });
+  ws.views = [{ state: 'frozen', ySplit: 3 }];
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type:
@@ -2138,7 +2435,7 @@ async function ctExportar() {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 
-  const conImagen = imgs.filter(Boolean).length;
+  const conImagen = imgs.size;
   setStatusBar(`Solicitud exportada: ${rows.length} líneas, ${conImagen} con vista 3D.`);
   notify('✅ Solicitud de contrato exportada');
 }
@@ -2282,6 +2579,7 @@ const PARAM_MAP = {
   globalId:  'globalId',
   cantidad:  'cantidad',
   unidad:    'unidad',
+  taskId:    'TaskID',
 };
 
 // Nombres alternativos habituales, para preseleccionar la opción más probable
@@ -2298,6 +2596,7 @@ const PARAM_CANDIDATES = {
               'Clave de nota','Cod APU','Cod Ítem','Cod Item'],
   tipo:      ['Tipo original','tipo','Tipo','TIPO','Type','type','Tipo de elemento',
               'Familia original','Nombre de tipo','Type Name'],
+  taskId:    ['TaskID','Task Id','TaskName','Task Name','Nombre de tarea','ID tarea'],
   contrato:  ['Contrato','contrato','CONTRATO','Cod Contrato','No. Contrato','Num Contrato',
               'Numero de contrato','Número de contrato','contract','Contract'],
   edificacion: ['Cod Edificación','Cod Edificacion','edificacion','Edificación','Edificacion',
@@ -2360,8 +2659,8 @@ function showMappingScreen(propNames, mode) {
     document.getElementById('qty-block-json').style.display = isJSON ? 'block' : 'none';
 
     const keys = isJSON
-      ? ['nivel','actividad','descGrupo','categoria','tipo','contrato','edificacion','grupo','globalId','cantidad','unidad','area','longitud','volumen','altura','sentido','keynote']
-      : ['nivel','actividad','descGrupo','categoria','tipo','contrato','edificacion','grupo','area','longitud','volumen','altura','sentido','keynote'];
+      ? ['nivel','actividad','descGrupo','categoria','tipo','contrato','edificacion','grupo','globalId','cantidad','unidad','area','longitud','volumen','altura','sentido','keynote','taskId']
+      : ['nivel','actividad','descGrupo','categoria','tipo','contrato','edificacion','grupo','area','longitud','volumen','altura','sentido','keynote','taskId'];
 
     const guessed = {};
     for (const k of keys) {
@@ -2464,7 +2763,7 @@ function applyJSONMapping(elements) {
       altura:    numJSON(flat, PARAM_MAP.altura),
       colorIFC:  el.colorIFC || flat['colorIFC'] || null,
       // El avance real lo definen únicamente los cortes registrados en Bitácora BIM
-      ejecutado: false, enProceso: false, fechaEjecutado: '', taskId: '',
+      ejecutado: false, enProceso: false, fechaEjecutado: '', taskId: pick('taskId') || '',
       vertices:  el.vertices || [],
       faces:     el.faces || [],
     });
@@ -2828,7 +3127,7 @@ async function loadIFCDirect(arrayBuffer, filename) {
       // que dejan elegir cualquier parámetro del modelo
       extra: flat,
       colorIFC: geoData.colorIFC || null,
-      ejecutado:false, enProceso:false, fechaEjecutado:'', taskId:'',
+      ejecutado:false, enProceso:false, fechaEjecutado:'', taskId: flat[PARAM_MAP.taskId] || '',
       vertices: geoData.vertices, faces: geoData.faces
     });
   }
@@ -3517,6 +3816,8 @@ function buildMeshes() {
 // ── MESH COLOR UTILS ──────────────────────────
 function getMeshColor(gid) {
   if (STATE.selected.has(gid)) return COLORS.selected;
+  // En Pedidos el color dice qué está pedido, no el estado de los cortes
+  if (moduloActivo === 'pedidos' && typeof pedColor === 'function') return pedColor(gid);
   // Rechazado y sin ningun corte valido: rojo, aunque cuente como pendiente
   if (STATE.rejectedElements && STATE.rejectedElements.has(gid) && !STATE.cutElements.has(gid))
     return parseInt(CUT_ESTADOS.rechazado.color.slice(1), 16);
@@ -3538,9 +3839,16 @@ function refreshMeshColor(gid) {
   mesh.material.color.setHex(getMeshColor(gid));
   mesh.material.opacity = 1.0;
   mesh.material.transparent = false;
+  mesh.material.depthWrite = true;
+  mesh.renderOrder = 0;
 }
 
 function refreshAllColors() {
+  if (moduloActivo === 'pedidos') {          // Pedidos tiene su propio código de color
+    Object.keys(STATE.meshes).forEach(gid => refreshMeshColor(gid));
+    pedirRender();
+    return;
+  }
   if (typeof colorMode !== 'undefined' && colorMode === 'activity') {
     applyActivityColors();
   } else if (typeof colorMode !== 'undefined' && colorMode === 'material') {
@@ -3814,8 +4122,10 @@ function updatePropsPanel() {
   let qtyUnit = [...units][0] || 'und';
   let qtyOk = true;
   selectedEls.forEach(el => {
-    if (el.cantidad !== null && el.cantidad !== undefined) {
-      totalQty += el.cantidad;
+    const cantidad = cantidadLineaElemento(el);
+    const tieneCantidad = typeof cantidad === 'number' && isFinite(cantidad);
+    if (tieneCantidad) {
+      totalQty += cantidad;
     } else {
       qtyOk = false;
     }
@@ -3838,6 +4148,7 @@ function updatePropsPanel() {
 
 // ── CUT FORM ──────────────────────────────────
 function updateCutForm() {
+  if (typeof pedSelCambio === 'function') pedSelCambio();
   const count = STATE.selected.size;
   const empty = document.getElementById('cut-form-empty');
   const form  = document.getElementById('cut-form');
@@ -3932,9 +4243,8 @@ function registerCut() {
   // Calculate totals per unit
   const qtyByUnit = {};
   selectedEls.forEach(el => {
-    if (el.cantidad !== null && el.cantidad !== undefined) {
-      qtyByUnit[el.unidad] = (qtyByUnit[el.unidad] || 0) + el.cantidad;
-    }
+    const u = esActividadML(el.actividad) ? 'ml' : el.unidad;
+    qtyByUnit[u] = (qtyByUnit[u] || 0) + cantidadLineaElemento(el);
   });
 
   const cut = {
@@ -4107,20 +4417,21 @@ function deleteCut(id) {
 // ── FILTROS EN CASCADA ────────────────────────────────────────────────────
 // Cada desplegable solo ofrece lo que existe dentro de lo ya elegido arriba:
 // Edificación → Nivel → Grupo → Actividad.
-// Edificación y Nivel son de selección única; Grupo y Actividad admiten varias
+// Edificación es de selección única; Nivel, Grupo y Actividad admiten varias
 // casillas a la vez, porque con modelos de decenas de miles de elementos la
 // lista de actividades es inmanejable de una en una.
 // (Estado queda fuera: sus opciones son fijas, no salen del modelo.)
 const CADENA_FILTROS = [
   { key:'contrato',    campo:'contrato',    multi:false, sel:'f-contrato'    },
   { key:'edificacion', campo:'edificacion', multi:false, sel:'f-edificacion' },
-  { key:'nivel',       campo:'nivel',       multi:false, sel:'f-nivel'       },
+  { key:'nivel',       campo:'nivel',       multi:true,  sel:'ms-nivel'      },
   { key:'grupo',       campo:'descGrupo',   multi:true,  sel:'ms-grupo'      },
   { key:'actividad',   campo:'actividad',   multi:true,  sel:'ms-actividad'  },
 ];
 
 // Estado de los desplegables con casillas
 const MS = {
+  nivel:     { sel:new Set(), opts:[], vacio:'Todos', plural:'niveles' },
   grupo:     { sel:new Set(), opts:[], vacio:'Todos', plural:'grupos' },
   actividad: { sel:new Set(), opts:[], vacio:'Todas', plural:'actividades' },
 };
@@ -4341,7 +4652,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-  document.getElementById('f-nivel').value = '';
+  MS.nivel.sel.clear(); msEtiqueta('nivel');
   document.getElementById('f-contrato').value = '';
   document.getElementById('f-edificacion').value = '';
   document.getElementById('f-estado').value = 'all';
@@ -4365,7 +4676,7 @@ function buildLevelChips() {
   all.onclick = () => {
     document.querySelectorAll('.level-chip').forEach(c => c.classList.remove('active'));
     all.classList.add('active');
-    document.getElementById('f-nivel').value = '';
+    MS.nivel.sel.clear(); msEtiqueta('nivel');
     applyFilters();
   };
   container.appendChild(all);
@@ -4377,7 +4688,7 @@ function buildLevelChips() {
     chip.onclick = () => {
       document.querySelectorAll('.level-chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
-      document.getElementById('f-nivel').value = nv;
+      MS.nivel.sel.clear(); if (nv) MS.nivel.sel.add(nv); msEtiqueta('nivel');
       applyFilters();
     };
     container.appendChild(chip);
@@ -4530,7 +4841,7 @@ function renderDashboard() {
     const pagoCtx = document.getElementById('chart-pago').getContext('2d');
     let qTotal = 0, qEjec = 0;
     STATE.elements.forEach(el => {
-      const q = (typeof el.cantidad === 'number' && isFinite(el.cantidad)) ? el.cantidad : 0;
+      const q = cantidadLineaElemento(el);
       qTotal += q;
       if (STATE.cutElements.has(el.globalId)) qEjec += q;
     });
@@ -4643,15 +4954,16 @@ function buildPendientesData(nivelFilter, grupoFilter, edifFilter) {
     if (grupoFilter && el.descGrupo !== grupoFilter) return;
     if (edifFilter && el.edificacion !== edifFilter) return;
     const edi = el.edificacion || '', con = el.contrato || '';
-    const key = con + '||' + edi + '||' + el.actividad + '||' + el.nivel + '||' + el.unidad;
+    const unidad = esActividadML(el.actividad) ? 'ml' : el.unidad;
+    const key = con + '||' + edi + '||' + el.actividad + '||' + el.nivel + '||' + unidad;
     if (!map[key]) map[key] = {
       contrato: con,
       edificacion: edi,
       actividad: el.actividad, nivel: el.nivel, descGrupo: el.descGrupo,
-      unidad: el.unidad, totalQty: 0, ejecutadoQty: 0, corteQty: 0, pendiente: 0,
+      unidad, totalQty: 0, ejecutadoQty: 0, corteQty: 0, pendiente: 0,
       totalEls: 0, ejecutadoEls: 0, corteEls: 0,
     };
-    const qty = el.cantidad || 0;
+    const qty = cantidadLineaElemento(el);
     map[key].totalQty += qty;
     map[key].totalEls++;
     if (STATE.cutElements.has(el.globalId)) {
@@ -4879,24 +5191,35 @@ function closeExportModal() {
 // Despliega las opciones del PDF con la lista de cortes registrados
 function abrirOpcionesPDF() {
   const panel = document.getElementById('pdf-opts');
-  const sel = document.getElementById('pdf-corte');
+  const lista = document.getElementById('pdf-corte-lista');
   if (!STATE.cuts.length) { alert('No hay cortes registrados para imprimir.'); return; }
-  sel.innerHTML = '<option value="">Todos los cortes</option>' +
-    STATE.cuts.slice().reverse().map(ct => {
-      const q = Object.entries(ct.qtyByUnit || {})
-        .map(([u, v]) => (+v || 0).toFixed(2) + ' ' + u).join(' · ') || '—';
-      return `<option value="${esc(ct.id)}">${esc(ct.number)} · ${esc(ct.date || '')}`
-           + ` · ${esc(ct.nivel || ct.actividad || '')} — ${esc(q)}</option>`;
-    }).join('');
-  sel.onchange = () => {
-    document.getElementById('pdf-nota').textContent = sel.value
-      ? 'Saldrá solo ese corte, con su desglose por actividad y su vista 3D.'
-      : 'Saldrá el historial completo, una ficha por corte y las cantidades pendientes.';
-  };
-  sel.onchange();
+  lista.innerHTML = STATE.cuts.slice().reverse().map(ct => {
+    const q = Object.entries(ct.qtyByUnit || {})
+      .map(([u, v]) => (+v || 0).toFixed(2) + ' ' + u).join(' · ') || '—';
+    const inf = CUT_ESTADOS[estadoDeCorte(ct)] || {};
+    return `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+      <input type="checkbox" value="${esc(ct.id)}" checked style="margin:0" onchange="pdfNota()">
+      <span style="color:${inf.color || '#555'};font-weight:600">${esc(ct.number)}</span>
+      <span>${esc(ct.date || '')} · ${esc(ct.nivel || ct.actividad || '')} — ${esc(q)}</span>
+    </label>`;
+  }).join('');
+  pdfNota();
   panel.hidden = false;
-  sel.focus();
 }
+
+function pdfSelTodos(marcar) {
+  document.querySelectorAll('#pdf-corte-lista input[type=checkbox]').forEach(cb => cb.checked = marcar);
+  pdfNota();
+}
+
+function pdfNota() {
+  const n = document.querySelectorAll('#pdf-corte-lista input[type=checkbox]:checked').length;
+  document.getElementById('pdf-nota').textContent =
+    !n ? 'Marca al menos un corte.'
+    : n === 1 ? 'Saldrá solo ese corte, con su desglose por actividad y su vista 3D.'
+    : `Saldrán ${n} cortes: el historial, una ficha por corte y las cantidades pendientes.`;
+}
+
 
 document.getElementById('export-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('export-modal')) closeExportModal();
@@ -4975,7 +5298,9 @@ async function exportExcel() {
     (cut.elementIds || []).forEach(gid => {
       const el = elById.get(gid);
       if (el) elRows.push([cut.number, cut.date, gid, el.categoria, el.edificacion || '',
-        el.nivel, el.actividad, el.descGrupo, el.cantidad, el.unidad]);
+        el.nivel, el.actividad, el.descGrupo,
+        Math.round(cantidadLineaElemento(el) * 100) / 100,
+        esActividadML(el.actividad) ? 'ml' : el.unidad]);
     });
   });
   const ws5 = XLSX.utils.aoa_to_sheet(elRows);
@@ -5043,7 +5368,7 @@ function groupByActivity(globalIds, elById) {
     const el = elById.get(gid);
     if (!el) { sinDatos++; continue; }
     const act = el.actividad || '(sin actividad asignada)';
-    const uni = el.unidad || 'und';
+    const uni = esActividadML(act) ? 'ml' : (el.unidad || 'und');
     const edi = el.edificacion || '', con = el.contrato || '';
     const key = con + '\u0000' + edi + '\u0000' + act + '\u0000' + uni;
     let row = map.get(key);
@@ -5053,7 +5378,8 @@ function groupByActivity(globalIds, elById) {
       map.set(key, row);
     }
     row.elementos++;
-    if (typeof el.cantidad === 'number' && isFinite(el.cantidad)) row.cantidad += el.cantidad;
+    const cantidad = cantidadLineaElemento(el);
+    if (cantidad !== null && isFinite(cantidad)) row.cantidad += cantidad;
     if (el.descGrupo) row.grupos.add(el.descGrupo);
   }
   const rows = [...map.values()].map(r => ({
@@ -5134,6 +5460,19 @@ async function captureCutImages(onProgress, soloEstos) {
       if (onProgress) onProgress(i + 1, lista.length);
 
       const cutSet = new Set(cut.elementIds || []);
+      // Lo pagado en cortes anteriores se ve en gris oscuro: así se lee qué
+      // se paga ahora frente a lo que ya estaba pagado
+      const posicionCut = STATE.cuts.findIndex(ct => String(ct.id) === String(cut.id));
+      const pagadosPrevios = new Set();
+      STATE.cuts.slice(0, Math.max(0, posicionCut)).forEach(ct => {
+        if (estadoDeCorte(ct) !== 'pagado') return;
+        (ct.elementIds || []).forEach(gid => pagadosPrevios.add(gid));
+      });
+      const estadoCut = estadoDeCorte(cut);
+      const colorCut = estadoCut === 'pagado'    ? 0x5AB87A
+                     : estadoCut === 'rechazado' ? 0xE05050
+                     : estadoCut === 'revision'  ? 0x3A7FC1
+                     : 0xF5892A;   // aprobación
 
       // Elementos del corte en naranja; el resto como fantasma gris
       let found = 0;
@@ -5147,13 +5486,19 @@ async function captureCutImages(onProgress, soloEstos) {
           // que Three.js lo dibuje DESPUES de los fantasmas. Asi un elemento
           // enterrado en el edificio sigue viendose, y con depthWrite activo
           // los elementos del propio corte se ocultan entre si correctamente.
-          mesh.material.color.setHex(COLORS.cut);
+          mesh.material.color.setHex(colorCut);
           mesh.material.transparent = true;
           mesh.material.opacity = 1;
           mesh.material.depthWrite = true;
           mesh.renderOrder = 10;
           box.expandByObject(mesh);
           found++;
+        } else if (pagadosPrevios.has(gid)) {
+          mesh.material.color.setHex(0x4A4E57);
+          mesh.material.transparent = false;
+          mesh.material.opacity = 1;
+          mesh.material.depthWrite = true;
+          mesh.renderOrder = 2;
         } else {
           // Fantasma de contexto: no escribe profundidad, asi nunca oculta
           // al corte ni se acumula de forma opaca capa sobre capa.
@@ -5226,11 +5571,12 @@ async function captureCutImages(onProgress, soloEstos) {
 }
 
 async function exportPDF() {
-  // Un corte concreto, o todos si no se eligio ninguno
-  const selId = (document.getElementById('pdf-corte') || {}).value || '';
-  const cortes = selId ? STATE.cuts.filter(ct => String(ct.id) === String(selId)) : STATE.cuts.slice();
-  const unSoloCorte = !!selId;
-  if (!cortes.length) { alert('No se encontró el corte seleccionado.'); return; }
+  // Los cortes marcados en la lista de casillas
+  const marcados = new Set([...document.querySelectorAll('#pdf-corte-lista input[type=checkbox]:checked')]
+    .map(cb => String(cb.value)));
+  const cortes = STATE.cuts.filter(ct => marcados.has(String(ct.id)));
+  const unSoloCorte = cortes.length === 1;
+  if (!cortes.length) { alert('Marca al menos un corte para imprimir.'); return; }
   closeExportModal();
 
   const win = window.open('', '_blank');
@@ -5277,21 +5623,55 @@ async function exportPDF() {
   // ── Ficha por corte: desglose de cantidades + vista 3D ──
   const elById = buildElementIndex();
 
+  // Contratado, acumulado y pendiente salen del MISMO groupByActivity que el
+  // desglose del corte (misma clave contrato + edificación + actividad + unidad,
+  // ml en las actividades lineales), así cada fila cruza con su contratado.
+  const claveFila = r => [r.contrato, r.edificacion, r.actividad, r.unidad].join('\u0000');
+  const porClave = ids => new Map(groupByActivity(ids, elById).rows.map(r => [claveFila(r), r.cantidad]));
+  const contratadoMap = porClave(STATE.elements.map(el => el.globalId));
+  // Color de los elementos del corte en la vista 3D, según su estado
+  const COLOR_ESTADO_PDF = { pagado: '#5AB87A', rechazado: '#E05050', revision: '#3A7FC1' };
+
   const fichasHtml = cortes.map(cut => {
     const g = groupByActivity(cut.elementIds || [], elById);
-
     const colEdif = g.mostrarEdificacion;
-    const filas = g.rows.map(r => `<tr>
-        ${colEdif ? `<td class="edif">${esc(r.edificacion || '—')}</td>` : ''}
-        <td class="act">${esc(r.actividad)}${r.grupo ? `<small>${esc(r.grupo)}</small>` : ''}</td>
-        <td class="num">${esc(r.elementos)}</td>
-        <td class="qty">${esc(r.cantidad.toFixed(2))} <span class="u">${esc(r.unidad)}</span></td>
-      </tr>`).join('');
 
-    const filaTotal = `<tr class="total">
-        <td${colEdif ? ' colspan="2"' : ''}>TOTAL DEL CORTE</td>
-        <td class="num">${g.totalElementos}</td>
-        <td class="qty">${totalesToText(g.totales)}</td>
+    // Acumulado: lo pagado en los cortes ANTERIORES a este
+    const pos = STATE.cuts.findIndex(ct => String(ct.id) === String(cut.id));
+    const idsPagadosPrevios = [...new Set(STATE.cuts.slice(0, Math.max(0, pos))
+      .filter(ct => estadoDeCorte(ct) === 'pagado').flatMap(ct => ct.elementIds || []))];
+    const acumMap = porClave(idsPagadosPrevios);
+
+    const f2 = v => esc(ctFmt(v));
+    const tot = { contratado: 0, aPagar: 0, acumulado: 0, pendiente: 0 };
+    const filas = g.rows.map(r => {
+      const k = claveFila(r);
+      const contratado = contratadoMap.get(k) || 0;
+      const acumulado = acumMap.get(k) || 0;
+      const pendiente = contratado - acumulado - r.cantidad;
+      tot.contratado += contratado; tot.aPagar += r.cantidad;
+      tot.acumulado += acumulado;   tot.pendiente += pendiente;
+      return `<tr>
+        ${colEdif ? `<td class="edif">${esc(r.edificacion || '—')}</td>` : ''}
+        <td class="act">${esc(r.actividad)} <span class="u">${esc(r.unidad)}</span>${r.grupo ? `<small>${esc(r.grupo)}</small>` : ''}</td>
+        <td class="monto">${f2(contratado)}</td>
+        <td class="monto">${f2(r.cantidad)}</td>
+        <td class="monto">${f2(acumulado)}</td>
+        <td class="monto"${pendiente < -0.005 ? ' style="color:#E05050"' : ''}>${f2(pendiente)}</td>
+      </tr>`;
+    }).join('');
+
+    // Sumar m² con ml no dice nada: el total numérico solo si hay una unidad
+    const unidades = Object.keys(g.totales);
+    const filaTotal = unidades.length === 1
+      ? `<tr class="total">
+        <td${colEdif ? ' colspan="2"' : ''}>TOTAL DEL CORTE (${esc(unidades[0])})</td>
+        <td class="monto">${f2(tot.contratado)}</td><td class="monto">${f2(tot.aPagar)}</td>
+        <td class="monto">${f2(tot.acumulado)}</td><td class="monto">${f2(tot.pendiente)}</td>
+      </tr>`
+      : `<tr class="total">
+        <td${colEdif ? ' colspan="2"' : ''}>TOTAL A PAGAR</td>
+        <td class="qty" colspan="4">${totalesToText(g.totales)}</td>
       </tr>`;
 
     const aviso = g.sinDatos
@@ -5323,12 +5703,13 @@ async function exportPDF() {
 
       <p class="sub-th">Cantidades por actividad</p>
       <table class="desglose">
-        <thead><tr>${colEdif ? '<th class="edif">Edificación</th>' : ''}<th>Actividad</th><th class="num">Elem.</th><th class="qty">Cantidad</th></tr></thead>
+        <thead><tr>${colEdif ? '<th class="edif">Edificación</th>' : ''}<th>Actividad</th><th class="monto">Contratado</th><th class="monto">A pagar</th><th class="monto">Acumulado</th><th class="monto">Pendiente</th></tr></thead>
         <tbody>${filas}${filaTotal}</tbody>
       </table>
       ${aviso}
       ${img}
-      <p class="leyenda"><span class="sw-cut"></span> Elementos de este corte
+      <p class="leyenda"><span class="sw-cut" style="background:${COLOR_ESTADO_PDF[estadoDeCorte(cut)] || '#F5892A'}"></span> Elementos de este corte
+         &nbsp;·&nbsp; <span class="sw-cut" style="background:#4A4E57"></span> Pagado en cortes anteriores
          &nbsp;·&nbsp; <span class="sw-ctx"></span> Resto del modelo (referencia)</p>
     </div>`;
   }).join('');
@@ -5397,6 +5778,7 @@ async function exportPDF() {
       .pend-pdf .edif{width:110px;font-weight:600;color:#3A7FC1;font-size:11px}
       .desglose td.act small{display:block;color:#999;font-size:9px;margin-top:1px}
       .desglose .num{width:56px;text-align:center}
+      .desglose .monto{width:68px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
       .desglose .qty{width:120px;text-align:right;font-variant-numeric:tabular-nums;
                      white-space:nowrap;font-weight:600}
       .desglose .qty .u{font-weight:400;color:#888}
@@ -5443,6 +5825,7 @@ async function exportPDF() {
 
 </script>
 <script src="js/cortes-nube.js"></script>
+<script src="js/pedidos.js"></script>
 <script src="js/entornos-ui.js"></script>
 <script src="js/accesos-ui.js"></script>
 <script src="js/importar-ui.js"></script>
