@@ -356,9 +356,16 @@
     } catch (e) { return false; }
   }
 
+  // Motor de voz: 'economico' (navegador + DeepSeek, js/agente-voz-economico.js)
+  // o 'elevenlabs'. ?voz=elevenlabs en la URL fuerza ElevenLabs para comparar.
+  // Si el económico no tiene intermediario configurado, se usa ElevenLabs.
+  const MOTOR = new URLSearchParams(location.search).get('voz') === 'elevenlabs' ? 'elevenlabs' : 'economico';
+
   window.alModeloCargadoAgente = function () {
     verificandoObra = obraEsDePruebas();
-    montarWidget();
+    if (MOTOR === 'economico' && window.agenteEconomicoConfigurado && window.agenteEconomicoConfigurado())
+      window.montarAgenteEconomico();
+    else montarWidget();
   };
 
   window.EurbeAgenteVoz = { herramientas };

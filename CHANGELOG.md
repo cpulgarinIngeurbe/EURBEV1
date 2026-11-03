@@ -4,6 +4,33 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-11-03 17:32 (hora Colombia) · inicio: agente de voz económico (pruebas)
+
+- Estado de partida: `main` y `desarrollo` en `f4fe2b2` (mejoras de eurbe 2 en
+  producción). Punto de regreso si algo sale mal: ese mismo commit.
+- Motivo: el agente de ElevenLabs funciona bien pero cobra por minuto de conversación
+  (alrededor de US$0,08/min más el modelo), demasiado caro para el uso diario.
+- Plan, solo en `desarrollo` y en la obra de «Pruebas»:
+  - Oído y voz del propio navegador (Chrome/Edge), sin costo.
+  - Cerebro: DeepSeek con llamada a herramientas, a través de un intermediario que
+    guarda la clave (la clave nunca va en la página).
+  - Se reutilizan las 8 herramientas actuales, la confirmación en dos pasos y la regla
+    de escribir solo en «Pruebas».
+  - ElevenLabs se conserva como opción que se puede volver a encender.
+- Producción no cambia hasta validar.
+- Hecho en `desarrollo`:
+  - `js/agente-ia-logica.js`: prompt, herramientas para el modelo y la vuelta de
+    conversación, con pruebas en `tests/unit/agente-ia-logica.test.mjs`.
+  - `js/agente-voz-economico.js`: botón de micrófono, panel (también se puede
+    escribir), reconocimiento y voz del navegador.
+  - `proxy-ia/worker.js`: intermediario en Cloudflare que guarda la clave y verifica
+    la sesión de Firebase.
+  - `js/agente-voz.js`: elige el motor. Si `URL_PROXY` está vacía, o con
+    `?voz=elevenlabs`, sigue ElevenLabs.
+  - Pasos de instalación en `docs/agente-voz/economico.md`.
+  - Pendiente: crear la cuenta de DeepSeek y el Worker, y poner su dirección en
+    `URL_PROXY`.
+
 ## 2026-11-03 13:53 (hora Colombia) · mejoras traídas de «eurbe 2.html»
 
 - Módulo **Pedidos** de material (pestaña «Pedidos», ya no es maqueta): mampostería,
