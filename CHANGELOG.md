@@ -4,6 +4,13 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-11-04 07:27 (hora Colombia) · publicación a producción
+
+- `main` pasa de `f4fe2b2` a la versión de `desarrollo` con el agente de voz económico.
+  Punto de regreso: `f4fe2b2`.
+- Mientras `URL_PROXY` esté vacía, producción sigue usando ElevenLabs: los usuarios no
+  ven cambios. El agente económico se enciende cuando exista el Worker de Cloudflare.
+
 ## 2026-11-03 17:32 (hora Colombia) · inicio: agente de voz económico (pruebas)
 
 - Estado de partida: `main` y `desarrollo` en `f4fe2b2` (mejoras de eurbe 2 en
