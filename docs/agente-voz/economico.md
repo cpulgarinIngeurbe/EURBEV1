@@ -1,9 +1,10 @@
-# Agente de voz económico (navegador + DeepSeek)
+# Agente de voz económico (navegador + Gemini)
 
 Reemplaza el cobro por minuto de ElevenLabs:
 
 - **Oído y voz:** los del propio navegador (Chrome o Edge), sin costo.
-- **Cerebro:** DeepSeek, que cobra por texto procesado: una fracción de centavo de dólar por orden.
+- **Cerebro:** Google Gemini (modelo Flash-Lite), que cobra por texto procesado: una fracción de centavo de dólar por orden.
+  Se cambió de DeepSeek a Gemini porque la red de Ingeurbe bloquea DeepSeek.
 - **Herramientas:** las mismas 8 de siempre (`js/agente-voz.js`).
 
 Piezas:
@@ -12,15 +13,16 @@ Piezas:
 |---|---|
 | `js/agente-ia-logica.js` | Prompt, herramientas descritas para el modelo y la vuelta «el modelo pide herramienta → la página la ejecuta → el modelo responde». |
 | `js/agente-voz-economico.js` | Botón de micrófono, panel de conversación, reconocimiento y voz del navegador. Aquí va `URL_PROXY`. |
-| `proxy-ia/worker.js` | Intermediario en Cloudflare que guarda la clave de DeepSeek y solo atiende a personas con sesión de E-Urbe. |
+| `proxy-ia/worker.js` | Intermediario en Cloudflare que guarda la clave de Gemini y solo atiende a personas con sesión de E-Urbe. Sirve con cualquier proveedor con formato OpenAI. |
 
 Mientras `URL_PROXY` esté vacía, la app sigue usando ElevenLabs. Con `?voz=elevenlabs` en la dirección se fuerza ElevenLabs para comparar.
 
-## Paso 1 · Cuenta de DeepSeek (la clave la maneja solo el administrador)
+## Paso 1 · Clave de Gemini (la maneja solo el administrador)
 
-1. Entrar a <https://platform.deepseek.com> y crear la cuenta.
-2. **Top up**: recargar un saldo pequeño (por ejemplo US$5). Es prepago: cuando se acaba el saldo, el agente deja de responder, nunca cobra de más.
-3. **API keys → Create new API key**. Copiarla y guardarla. **No pegarla en el código, en el chat ni en ningún archivo del repositorio.**
+1. Entrar a <https://aistudio.google.com> con una cuenta de Google y aceptar los términos.
+2. **Get API key → Create API key**. Si pide un proyecto, crear uno nuevo (por ejemplo `eurbe-ia`).
+3. **Activar la facturación** del proyecto (**Set up billing**), con tarjeta. En el plan gratis Google puede usar los textos para mejorar sus productos; en el de pago no. Se recomienda poner un presupuesto con alerta en Google Cloud (**Billing → Budgets & alerts**), por ejemplo US$5.
+4. Copiar la clave y guardarla. **No pegarla en el código, en el chat ni en ningún archivo del repositorio.**
 
 ## Paso 2 · Intermediario en Cloudflare (gratis)
 
@@ -31,7 +33,7 @@ Mientras `URL_PROXY` esté vacía, la app sigue usando ElevenLabs. Con `?voz=ele
 
    | Nombre | Tipo | Valor |
    |---|---|---|
-   | `DEEPSEEK_API_KEY` | **Secret** | la clave del paso 1 |
+   | `CLAVE_API` | **Secret** | la clave del paso 1 |
    | `FIREBASE_PROJECT_ID` | Text | `eurbe-piloto` |
    | `ORIGENES` | Text | `https://cpulgariningeurbe.github.io,http://localhost:5174` |
 
@@ -67,18 +69,27 @@ Cada llamada queda en la consola del navegador (F12, filtro `agente-voz`).
 
 ## Costos de referencia
 
-Son cifras de terceros de noviembre de 2026: confirmar en la página de precios de DeepSeek.
+Son cifras de terceros de noviembre de 2026: confirmar en <https://ai.google.dev/gemini-api/docs/pricing>.
 
-- DeepSeek cobra alrededor de US$0,14 a 0,30 por millón de tokens de entrada, según el modelo.
+- Gemini Flash-Lite cobra alrededor de US$0,10 a 0,30 por millón de tokens de entrada, según la versión.
 - Una orden con herramientas usa unos pocos miles de tokens. Con US$5 alcanza para miles de órdenes.
 - El plan gratis de Cloudflare Workers permite 100.000 llamadas al día.
 
 ## Datos
 
-DeepSeek procesa los textos en servidores en China. Lo que se envía:
+Gemini es de Google, el mismo proveedor de Firebase. Lo que se envía:
 
 - lo que dice la persona;
 - nombres de niveles, grupos y actividades;
 - cantidades y números de corte.
 
-No se envía el modelo 3D ni correos. Si la política de Ingeurbe no lo permite, se cambia `URL_API` y `MODELO` en el Worker por un proveedor que sirva DeepSeek fuera de China (con la misma API), sin tocar la página.
+No se envía el modelo 3D ni correos. Con la facturación activada, Google no usa esos textos para entrenar.
+
+## Cambiar de proveedor
+
+Sin tocar la página, en las variables del Worker:
+
+- `URL_API`: dirección «chat/completions» del proveedor (por ejemplo `https://api.deepseek.com/chat/completions`).
+- `MODELO`: nombre del modelo (por defecto `gemini-flash-lite-latest`).
+- `CLAVE_API`: la clave de ese proveedor.
+- `ESFUERZO`: razonamiento del modelo (`low` por defecto con Gemini; vacío no lo envía).

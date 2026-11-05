@@ -4,6 +4,16 @@
 > Los datos de obra (modelos, cortes, accesos) viven únicamente en Firestore,
 > nunca en este repositorio.
 
+## 2026-11-05 12:44 (hora Colombia) · agente económico: de DeepSeek a Gemini
+
+- La red de Ingeurbe bloquea DeepSeek (ERR_CONNECTION_RESET). Se cambia el cerebro del
+  agente a Google Gemini (Flash-Lite), igual de barato y del mismo proveedor de Firebase.
+- `proxy-ia/worker.js`: sirve con cualquier proveedor con formato OpenAI; por defecto
+  Gemini. La clave ahora se llama `CLAVE_API` (se acepta la antigua `DEEPSEEK_API_KEY`).
+  Variables opcionales `URL_API`, `MODELO` y `ESFUERZO`.
+- `docs/agente-voz/economico.md`: pasos para sacar la clave en aistudio.google.com.
+- Solo en `desarrollo`. Producción sigue con ElevenLabs.
+
 ## 2026-11-04 07:27 (hora Colombia) · publicación a producción
 
 - `main` pasa de `f4fe2b2` a la versión de `desarrollo` con el agente de voz económico.

@@ -1,5 +1,5 @@
 // Agente de voz económico: oído y voz del propio navegador (gratis) y, como
-// cerebro, DeepSeek a través de un intermediario que guarda la clave
+// cerebro, un modelo barato (Gemini) a través de un intermediario que guarda la clave
 // (proxy-ia/worker.js). Usa las mismas herramientas que el agente de
 // ElevenLabs (window.EurbeAgenteVoz.herramientas), con su confirmación en dos
 // pasos y la regla de escribir solo en obras de «Pruebas».
@@ -68,7 +68,7 @@
     reconocedor.start();
   }
 
-  // ── Cerebro (DeepSeek por el intermediario) ──
+  // ── Cerebro (modelo de IA por el intermediario) ──
   async function llamarModelo(mensajes) {
     const u = window.Nube && Nube.usuario();
     if (!u) throw new Error('Inicia sesión para usar el asistente.');
@@ -80,7 +80,7 @@
     });
     const datos = await r.json().catch(() => ({}));
     if (!r.ok) {
-      const msg = { 401: 'tu sesión no es válida; vuelve a entrar', 402: 'la cuenta de DeepSeek se quedó sin saldo',
+      const msg = { 401: 'tu sesión no es válida; vuelve a entrar', 402: 'la cuenta del proveedor de IA se quedó sin saldo',
                     403: 'esta dirección no está autorizada en el intermediario', 429: 'hay demasiadas órdenes seguidas; espera un momento' }[r.status];
       throw new Error(msg || (datos.error && (datos.error.message || datos.error)) || ('error ' + r.status));
     }
